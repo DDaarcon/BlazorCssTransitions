@@ -1,0 +1,19 @@
+@property --start-fade-in-opacity {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --finish-fade-in-opacity {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 1;
+}
+
+.fade-in-animation-start {
+    opacity: var(--start-fade-in-opacity);
+}
+
+.fade-in-animation-finish {
+    opacity: var(--finish-fade-in-opacity);
+}
