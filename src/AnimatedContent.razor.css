@@ -1,0 +1,10 @@
+.animated-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+}
+
+::deep .animated-content-item {
+    grid-row: 1;
+    grid-column: 1;
+}

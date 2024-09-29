@@ -1,0 +1,80 @@
+﻿@using BlazorCssTransitions.AnimatedVisibilityTransitions
+@using BlazorCssTransitions.Specifications
+
+@typeparam TState
+
+<div class="animated-content">
+
+    @if (ChildContent is not null)
+    {
+        @RenderStates(
+            renderState: state => ChildContent(state)
+        )
+    }
+
+    else if (Switch is not null)
+    {
+        @RenderStates(
+            renderState: Switch
+        )
+    }
+
+</div>
+
+@code {
+    private RenderFragment RenderStates(Func<TState, RenderFragment> renderState)
+        =>@<text>
+            @if (NewStateOnTop)
+            {
+                <AnimatedVisibility Visible
+                                    Enter="_enter"
+                                    Exit="_exit"
+                                    StartWithTransition
+                                    Class="animated-content-item"
+                                    @key=@CurrentStateKey>
+                    @renderState(TargetState)
+                </AnimatedVisibility>
+                
+                @foreach (var pastState in PastStates.AsEnumerable().Reverse())
+                {
+                    <AnimatedVisibility Visible="false"
+                                        Enter="_enter"
+                                        Exit="_exit"
+                                        OnHidden=@(() => OnPastStateElementWasHidden(pastState))
+                                        Class="animated-content-item"
+                                        @key=@pastState.Key>
+                        @renderState(pastState.State!)
+                    </AnimatedVisibility>
+                }
+            }
+
+            else
+            {
+                @foreach (var pastState in PastStates)
+                {
+                    <AnimatedVisibility Visible="false"
+                                        Enter="_enter"
+                                        Exit="_exit"
+                                        OnHidden=@(() => OnPastStateElementWasHidden(pastState))
+                                        Class="animated-content-item"
+                                        @key=@pastState.Key>
+                        @renderState(pastState.State!)
+                    </AnimatedVisibility>
+                }
+
+                <AnimatedVisibility Visible
+                                    Enter="_enter"
+                                    Exit="_exit"
+                                    StartWithTransition
+                                    Class="animated-content-item"
+                                    @key=@CurrentStateKey>
+                    @renderState(TargetState)
+                </AnimatedVisibility>
+            }
+        </text>;
+
+    private readonly EnterTransition _enter = EnterTransition.SlideIn(
+            Specification.EaseInOut(TimeSpan.FromSeconds(.8d)),
+            initialX: "20%");
+    private readonly ExitTransition _exit = ExitTransition.FadeOut(Specification.EaseInOut(TimeSpan.FromSeconds(1)));
+}
