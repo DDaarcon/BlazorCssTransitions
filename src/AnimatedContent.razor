@@ -8,42 +8,47 @@
     @if (ChildContent is not null)
     {
         @RenderStates(
-            renderState: state => ChildContent(state)
+            getStateCase: state => ChildContent(state)
         )
     }
 
     else if (Switch is not null)
     {
         @RenderStates(
-            renderState: Switch
+            getStateCase: Switch
         )
     }
 
 </div>
 
 @code {
-    private RenderFragment RenderStates(Func<TState, RenderFragment> renderState)
+    private RenderFragment RenderStates(Func<TState, StateSwitchCase> getStateCase)
         =>@<text>
             @if (NewStateOnTop)
             {
+                var targetStateCase = getStateCase(TargetState);
+                
                 <AnimatedVisibility Visible
-                                    Enter="_enter"
-                                    Exit="_exit"
-                                    StartWithTransition
+                                    Enter=@targetStateCase.Enter
+                                    Exit=@targetStateCase.Exit
+                                    StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
                                     Class="animated-content-item"
+                                    OnShown=@OnTargetStateElementWasShown
                                     @key=@CurrentStateKey>
-                    @renderState(TargetState)
+                    @targetStateCase.Fragment
                 </AnimatedVisibility>
                 
                 @foreach (var pastState in PastStates.AsEnumerable().Reverse())
                 {
+                    var pastStateCase = getStateCase(pastState.State);
+
                     <AnimatedVisibility Visible="false"
-                                        Enter="_enter"
-                                        Exit="_exit"
+                                        Enter=@pastStateCase.Enter
+                                        Exit=@pastStateCase.Exit
                                         OnHidden=@(() => OnPastStateElementWasHidden(pastState))
                                         Class="animated-content-item"
                                         @key=@pastState.Key>
-                        @renderState(pastState.State!)
+                        @pastStateCase.Fragment
                     </AnimatedVisibility>
                 }
             }
@@ -52,29 +57,29 @@
             {
                 @foreach (var pastState in PastStates)
                 {
+                    var pastStateCase = getStateCase(pastState.State);
+
                     <AnimatedVisibility Visible="false"
-                                        Enter="_enter"
-                                        Exit="_exit"
+                                        Enter=@pastStateCase.Enter
+                                        Exit=@pastStateCase.Exit
                                         OnHidden=@(() => OnPastStateElementWasHidden(pastState))
                                         Class="animated-content-item"
                                         @key=@pastState.Key>
-                        @renderState(pastState.State!)
+                        @pastStateCase.Fragment
                     </AnimatedVisibility>
                 }
 
+                var targetStateCase = getStateCase(TargetState);
+
                 <AnimatedVisibility Visible
-                                    Enter="_enter"
-                                    Exit="_exit"
-                                    StartWithTransition
+                                    Enter=@targetStateCase.Enter
+                                    Exit=@targetStateCase.Exit
+                                    StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
                                     Class="animated-content-item"
+                                    OnShown=@OnTargetStateElementWasShown
                                     @key=@CurrentStateKey>
-                    @renderState(TargetState)
+                    @targetStateCase.Fragment
                 </AnimatedVisibility>
             }
         </text>;
-
-    private readonly EnterTransition _enter = EnterTransition.SlideIn(
-            Specification.EaseInOut(TimeSpan.FromSeconds(.8d)),
-            initialX: "20%");
-    private readonly ExitTransition _exit = ExitTransition.FadeOut(Specification.EaseInOut(TimeSpan.FromSeconds(1)));
 }

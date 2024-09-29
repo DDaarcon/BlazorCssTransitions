@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
+using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,18 +14,23 @@ public partial class AnimatedContent<TState>
     public required TState TargetState { get; set; }
     private TState? _targetState;
 
-    private List<StateRecord> PastStates { get; } = new();
-    private int CurrentStateKey { get; set; } = 0;
-
     [Parameter]
-    public Func<TState, RenderFragment>? Switch { get; set; }
-
+    public Func<TState, StateSwitchCase>? Switch { get; set; }
     [Parameter]
     public RenderFragment<TState>? ChildContent { get; set; }
 
     [Parameter]
     public bool NewStateOnTop { get; set; }
 
+    [Parameter]
+    public bool StartWithTransition { get; set; }
+
+    [Parameter]
+    public EventCallback<TState> OnContentChange { get; set; }
+
+    private List<StateRecord> PastStates { get; } = new();
+    private int CurrentStateKey { get; set; } = 0;
+    private bool HasInitialTargetStateBeenShown { get; set; } = false;
 
     protected override void OnParametersSet()
     {
@@ -44,6 +50,16 @@ public partial class AnimatedContent<TState>
         }
     }
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        HasInitialTargetStateBeenShown = true;
+    }
+
+    private async Task OnTargetStateElementWasShown()
+    {
+        await OnContentChange.InvokeAsync(TargetState);
+    }
+
     private void OnPastStateElementWasHidden(StateRecord pastState)
     {
         PastStates.Remove(pastState);
@@ -53,5 +69,20 @@ public partial class AnimatedContent<TState>
     {
         public required int Key { get; init; }
         public required TState State { get; init; }
+    }
+
+    public class StateSwitchCase
+    {
+        public required RenderFragment Fragment { get; init; }
+
+        public EnterTransition? Enter { get; init; }
+        public ExitTransition? Exit { get; init; }
+
+
+        public static implicit operator StateSwitchCase(RenderFragment fragment)
+            => new()
+            {
+                Fragment = fragment
+            };
     }
 }

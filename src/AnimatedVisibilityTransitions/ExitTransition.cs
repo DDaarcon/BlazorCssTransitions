@@ -11,7 +11,7 @@ public interface ExitTransition : IBaseTransition
 {
     public static ExitTransition FadeOut(Specification? spec = null, float initialOpacity = 1f, float finishOpacity = 0f)
         => new FadeOutExitTransition(
-            spec ?? Specification.Linear(TimeSpan.FromSeconds(200)),
+            spec ?? Specification.Linear(),
             initialOpacity,
             finishOpacity);
 
