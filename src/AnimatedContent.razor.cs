@@ -28,6 +28,12 @@ public partial class AnimatedContent<TState>
     [Parameter]
     public EventCallback<TState> OnContentChange { get; set; }
 
+    [Parameter]
+    public string? Style { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
     private List<StateRecord> PastStates { get; } = new();
     private int CurrentStateKey { get; set; } = 0;
     private bool HasInitialTargetStateBeenShown { get; set; } = false;
@@ -63,6 +69,23 @@ public partial class AnimatedContent<TState>
     private void OnPastStateElementWasHidden(StateRecord pastState)
     {
         PastStates.Remove(pastState);
+    }
+
+    private string ContainerStyles
+        => Style ?? "";
+
+    private const string _containerClass = "animated-content";
+    private string ContainerClasses
+    {
+        get
+        {
+            IEnumerable<string> classes = [_containerClass];
+
+            if (!String.IsNullOrEmpty(Class))
+                classes = classes.Append(Class);
+
+            return String.Join(" ", classes);
+        }
     }
 
     private readonly struct StateRecord
