@@ -34,6 +34,11 @@ public partial class AnimatedContent<TState>
     [Parameter]
     public string? Class { get; set; }
 
+    [Parameter]
+    public EnterTransition? SharedEnter { get; set; }
+    [Parameter]
+    public ExitTransition? SharedExit { get; set; }
+
     private List<StateRecord> PastStates { get; } = new();
     private int CurrentStateKey { get; set; } = 0;
     private bool HasInitialTargetStateBeenShown { get; set; } = false;

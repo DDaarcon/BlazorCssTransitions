@@ -30,8 +30,8 @@
                 var targetStateCase = getStateCase(TargetState);
                 
                 <AnimatedVisibility Visible
-                                    Enter=@targetStateCase.Enter
-                                    Exit=@targetStateCase.Exit
+                                    Enter=@(targetStateCase.Enter ?? SharedEnter)
+                                    Exit=@(targetStateCase.Exit ?? SharedExit)
                                     StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
                                     Class="animated-content-item"
                                     OnShown=@OnTargetStateElementWasShown
@@ -44,8 +44,8 @@
                     var pastStateCase = getStateCase(pastState.State);
 
                     <AnimatedVisibility Visible="false"
-                                        Enter=@pastStateCase.Enter
-                                        Exit=@pastStateCase.Exit
+                                        Enter=@(pastStateCase.Enter ?? SharedEnter)
+                                        Exit=@(pastStateCase.Exit ?? SharedExit)
                                         OnHidden=@(() => OnPastStateElementWasHidden(pastState))
                                         Class="animated-content-item"
                                         @key=@pastState.Key>
@@ -61,8 +61,8 @@
                     var pastStateCase = getStateCase(pastState.State);
 
                     <AnimatedVisibility Visible="false"
-                                        Enter=@pastStateCase.Enter
-                                        Exit=@pastStateCase.Exit
+                                        Enter=@(pastStateCase.Enter ?? SharedEnter)
+                                        Exit=@(pastStateCase.Exit ?? SharedExit)
                                         OnHidden=@(() => OnPastStateElementWasHidden(pastState))
                                         Class="animated-content-item"
                                         @key=@pastState.Key>
@@ -73,8 +73,8 @@
                 var targetStateCase = getStateCase(TargetState);
 
                 <AnimatedVisibility Visible
-                                    Enter=@targetStateCase.Enter
-                                    Exit=@targetStateCase.Exit
+                                    Enter=@(targetStateCase.Enter ?? SharedEnter)
+                                    Exit=@(targetStateCase.Exit ?? SharedExit)
                                     StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
                                     Class="animated-content-item"
                                     OnShown=@OnTargetStateElementWasShown
