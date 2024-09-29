@@ -1,0 +1,109 @@
+﻿
+@* TEMPORARY COMPONENT FOR TESTING *@
+
+@* <AnimatedVisibility Visible="@_animTestVisible"
+                        Enter="EnterTransition.SlideIn(spec: Specification.Linear(TimeSpan.FromSeconds(10))) + EnterTransition.FadeIn(spec: Specification.Ease(TimeSpan.FromSeconds(2)))"
+                        Exit="ExitTransition.FadeOut(spec: Specification.Linear(TimeSpan.FromSeconds(2)))">
+        <span>bla bla bla</span>
+    </AnimatedVisibility>
+
+    <AnimatedSizeContainer>
+        <div style="background-color: blue; width: @(_size)px; height: @(_size)px;"></div>
+    </AnimatedSizeContainer> *@
+@* 
+    <MudButton OnClick="() => elements.Add(elements.DefaultIfEmpty().Max() + 1)">
+        Add
+    </MudButton>
+    <MudButton OnClick="() => elements.Remove(elements.DefaultIfEmpty().Max())">
+        Remove
+    </MudButton>
+
+    <AnimatedList ItemEnter="@(EnterTransition.FadeIn(Specification.EaseIn(TimeSpan.FromMilliseconds(1000))))"
+                  ItemExit="@ExitTransition.FadeOut(Specification.Linear(TimeSpan.FromSeconds(1)))">
+        @foreach (var el in elements)
+        {
+            <AnimatedListItem Key="@el.ToString()">
+                <MudText @onclick="@(() => OnElClick(el))">
+                    ELEMENT @el
+                </MudText>
+            </AnimatedListItem>
+        }
+    </AnimatedList> *@
+
+    <button @onclick="@(() => { State = State == "bbb" ? "ccc" : "bbb"; })">
+        Switch content
+    </button>
+
+    <AnimatedContent TState="string"
+                     TargetState="@State"
+                     Context="state"
+                     NewStateOnTop>
+        @if (state == "bbb")
+        {
+            <div style="background-color: red">
+                bbb
+            </div>
+        }
+        else
+        {
+            <div style="background-color: blue">
+                ccc
+            </div>
+        }
+    </AnimatedContent>
+
+@code {
+
+    private List<int> elements = [1, 2];
+
+    private void OnElClick(int el)
+    {
+        elements.Remove(el);
+        StateHasChanged();
+    }
+
+    private string State { get; set; } = "bbb";
+
+
+    private bool _animTestVisible { get; set; } = false;
+
+    private int _size { get; set; } = 100;
+
+    private System.Timers.Timer? _timer;
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            _timer = new(TimeSpan.FromSeconds(5));
+            _timer.Elapsed += (sender, args) =>
+            {
+                InvokeAsync(() =>
+                {
+                    _size = _size == 100 ? 50 : 100;
+                    StateHasChanged();
+                });
+                // _timer.Dispose();
+                // InvokeAsync(() =>
+                // {
+                //     _animTestVisible = true;
+                //     StateHasChanged();
+                // });
+
+                // _timer = new(TimeSpan.FromSeconds(5));
+                // _timer.Elapsed += (sender, args) =>
+                // {
+                //     _timer.Dispose();
+                //     InvokeAsync(() =>
+                //     {
+                //         _animTestVisible = false;
+                //         StateHasChanged();
+                //     });
+                // };
+                // _timer.Start();
+            };
+            _timer.Start();
+        }
+        base.OnAfterRender(firstRender);
+    }
+}
