@@ -12,22 +12,18 @@ internal class ItemsCollection(
 {
     private readonly ExternalRenderer _externalRenderer = externalRenderer;
 
-    private readonly Dictionary<string, Item> _itemsByKey = new();
+    private readonly Dictionary<string, Item> _itemsByKey = [];
     /// <summary>
     /// Current keys in order that they have to be displayed
     /// </summary>
-    private readonly List<string> _keysInOrder = new();
+    private readonly List<string> _currentKeysInOrder = new();
 
     /// <summary>
-    /// Keys in order, before the update
-    /// </summary>
-    private string[]? _previousKeysInOrder;
-    /// <summary>
-    /// Keys gathered when items are added, in order
+    /// Keys gathered when items are added, in order they appeared in fragment
     /// </summary>
     private readonly List<string> _keysOfNewItems = new();
     /// <summary>
-    /// Keys that were previously not present in the dictionary
+    /// Keys that were previously not present in the dictionary, in order they appeared in fragment
     /// </summary>
     private readonly List<string> _keysOfNewlyAddedNewItems = new();
 
@@ -35,13 +31,13 @@ internal class ItemsCollection(
     {
         _keysOfNewItems.Clear();
         _keysOfNewlyAddedNewItems.Clear();
-        _previousKeysInOrder = _keysInOrder.ToArray();
+        string[] previousKeysInOrder = [.. _currentKeysInOrder];
 
         await _externalRenderer.Render(fragmentWithItemsToProcess);
 
-        InitiateDisappearanceOfNoLongerPresentItems();
+        InitiateDisappearanceOfNoLongerPresentItems(previousKeysInOrder);
 
-        SetKeysOrder();
+        SetKeysInOrder(previousKeysInOrder);
 
         return GetItemsOrdered();
     }
@@ -50,7 +46,7 @@ internal class ItemsCollection(
     {
         if (_itemsByKey.Remove(key))
         {
-            _keysInOrder.Remove(key);
+            _currentKeysInOrder.Remove(key);
         }
 
         return GetItemsOrdered();
@@ -72,14 +68,14 @@ internal class ItemsCollection(
         };
     }
 
-    private void InitiateDisappearanceOfNoLongerPresentItems()
+    private void InitiateDisappearanceOfNoLongerPresentItems(string[] previousKeysInOrder)
     {
-        if (_previousKeysInOrder is null)
+        if (previousKeysInOrder is not { Length: > 0})
         {
             return;
         }
 
-        var removedElementKeys = _previousKeysInOrder.Except(_keysOfNewItems);
+        var removedElementKeys = previousKeysInOrder.Except(_keysOfNewItems);
 
         foreach (var key in removedElementKeys)
         {
@@ -95,26 +91,45 @@ internal class ItemsCollection(
         }
     }
 
-    private void SetKeysOrder()
+    private void SetKeysInOrder(string[] previousKeysInOrder)
     {
-        if (_keysInOrder.Count == 0)
+        if (_currentKeysInOrder.Count == 0)
         {
-            _keysInOrder.AddRange(_keysOfNewItems);
+            _currentKeysInOrder.AddRange(_keysOfNewItems);
             return;
         }
 
-        int offsetInFinalKeys = 0;
-        for (int newKeyIndex = 0; newKeyIndex < _keysOfNewItems.Count; newKeyIndex++)
-        {
+        // TODO currently supported is mainly just insertion in the end and deletion
+        _currentKeysInOrder.AddRange(_keysOfNewlyAddedNewItems);
 
-        }
+        //int offsetInFinalKeys = 0;
+        //int[] indexesOfNewlyInsertedKeys = [];
+        //for (int newKeyIndex = 0; newKeyIndex < _keysOfNewItems.Count; newKeyIndex++)
+        //{
+        //    var key = _keysOfNewItems[newKeyIndex];
+        //    int existsInUpdatedOrder = _currentKeysInOrder.IndexOf(key);
+
+        //    if (existsInUpdatedOrder > 0)
+        //    {
+        //        offsetInFinalKeys = 
+        //        continue;
+        //    }
+
+        //    _currentKeysInOrder.Insert(newKeyIndex)
+
+        //    if (existsInUpdatedOrder > 0)
+        //    {
+        //        // key exists in the previous order
+        //        _currentKeysInOrder.Insert()
+        //    }
+        //}
     }
 
     private List<Item> GetItemsOrdered()
     {
         var items = new List<Item>();
 
-        foreach (var key in _keysInOrder)
+        foreach (var key in _currentKeysInOrder)
         {
             items.Add(_itemsByKey[key]);
         }
