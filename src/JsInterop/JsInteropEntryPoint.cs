@@ -13,7 +13,7 @@ internal class JsInteropEntryPoint(IJSRuntime jsRuntime) : IAsyncDisposable
 {
     private readonly Lazy<Task<IJSObjectReference>> moduleTask
         = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorCssAnimations/scripts.js").AsTask());
+            "import", "./_content/BlazorCssTransitions/scripts.js").AsTask());
 
     internal async ValueTask<DOMRect> MeasureElement(ElementReference element)
     {
