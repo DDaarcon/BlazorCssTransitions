@@ -15,6 +15,12 @@ public interface ExitTransition : IBaseTransition
             initialOpacity,
             finishOpacity);
 
+    public static ExitTransition SlideOut(Specification? spec = null, string finishX = "-100%", string finishY = "0")
+        => new SlideOutExitTransition(
+            spec ?? Specification.Linear(),
+            finishX,
+            finishY);
+
     public static ExitTransition operator +(ExitTransition firstTransition, ExitTransition secondTransition)
     {
         return firstTransition.CombineWith(secondTransition);

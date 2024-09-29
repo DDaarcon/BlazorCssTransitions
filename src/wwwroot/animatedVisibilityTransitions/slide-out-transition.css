@@ -1,0 +1,19 @@
+@property --finish-slide-out-offset-x {
+    syntax: "<length-percentage>";
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --finish-slide-out-offset-y {
+    syntax: "<length-percentage>";
+    inherits: true;
+    initial-value: 0;
+}
+
+.slide-out-animation-start {
+    translate: 0 0;
+}
+
+.slide-out-animation-finish {
+    translate: var(--finish-slide-out-offset-x) var(--finish-slide-out-offset-y);
+}

@@ -13,8 +13,8 @@ public interface EnterTransition : IBaseTransition
     public static EnterTransition SlideIn(Specification? spec = null, string initialX = "-100%", string initialY = "0")
         => new SlideInEnterTransition(
             spec ?? Specification.Linear(),
-            initialX ?? "-100%",
-            initialY ?? "0");
+            initialX,
+            initialY);
 
     public static EnterTransition ExpandVertically(Specification? spec = null)
         => new ExpandEnterTransition(
