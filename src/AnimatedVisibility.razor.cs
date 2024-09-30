@@ -88,14 +88,18 @@ public partial class AnimatedVisibility
         SetNewStateAfterParametersSet();
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && StartWithTransition)
         {
+            await Task.Delay(TimeSpan.FromMilliseconds(20)); // TODO find a better way
+
             SetNewStateAfterParametersSet();
             StateHasChanged();
         }
     }
+
+
 
     internal async ValueTask<DOMScrollRect> GetScrollRect()
     {
@@ -106,6 +110,7 @@ public partial class AnimatedVisibility
     {
         return await _jsInteropEntryPoint.MeasureElement(Container);
     }
+
 
 
     private void SetNewStateAfterParametersSet()

@@ -16,8 +16,11 @@ public partial class AnimatedContent<TState>
 
     [Parameter]
     public Func<TState, StateSwitchCase>? Switch { get; set; }
+
     [Parameter]
     public RenderFragment<TState>? ChildContent { get; set; }
+    [Parameter]
+    public GetTransitions? TransitionsProvider { get; set; }
 
     [Parameter]
     public bool NewStateOnTop { get; set; }
@@ -113,4 +116,12 @@ public partial class AnimatedContent<TState>
                 Fragment = fragment
             };
     }
+
+    public class InterstateTransitions
+    {
+        public EnterTransition? FromPreviousStateEnter { get; set; }
+        public ExitTransition? ToNextStateStateExit { get; set; }
+    }
+
+    public delegate InterstateTransitions? GetTransitions(TState? fromState, TState? toState);
 }

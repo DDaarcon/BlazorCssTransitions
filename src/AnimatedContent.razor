@@ -23,64 +23,183 @@
 </div>
 
 @code {
+
     private RenderFragment RenderStates(Func<TState, StateSwitchCase> getStateCase)
-        =>@<text>
-            @if (NewStateOnTop)
-            {
-                var targetStateCase = getStateCase(TargetState);
-                
-                <AnimatedVisibility Visible
-                                    Enter=@(targetStateCase.Enter ?? SharedEnter)
-                                    Exit=@(targetStateCase.Exit ?? SharedExit)
-                                    StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
-                                    Class="animated-content-item"
-                                    OnShown=@OnTargetStateElementWasShown
-                                    @key=@CurrentStateKey>
-                    @targetStateCase.Fragment
-                </AnimatedVisibility>
-                
-                @foreach (var pastState in PastStates.AsEnumerable().Reverse())
-                {
-                    var pastStateCase = getStateCase(pastState.State);
+    {
+        var paramsOfStatesToRender = new AnimatedVisibilityParameters[PastStates.Count + 1];
+        
+        var targetStateCase = getStateCase(TargetState);
+        var targetTransitions = TransitionsProvider?.Invoke(default, TargetState);
 
-                    <AnimatedVisibility Visible="false"
-                                        Enter=@(pastStateCase.Enter ?? SharedEnter)
-                                        Exit=@(pastStateCase.Exit ?? SharedExit)
-                                        OnHidden=@(() => OnPastStateElementWasHidden(pastState))
+        paramsOfStatesToRender[0] = new AnimatedVisibilityParameters(
+            Visible: true,
+            Enter: targetTransitions?.FromPreviousStateEnter ?? targetStateCase.Enter ?? SharedEnter,
+            Exit: targetTransitions?.ToNextStateStateExit ?? targetStateCase.Exit ?? SharedExit,
+            StartWithTransition: StartWithTransition || HasInitialTargetStateBeenShown,
+            OnHidden: default,
+            OnShown: new EventCallback(this, () => OnTargetStateElementWasShown()),
+            Key: CurrentStateKey,
+            Fragment: targetStateCase.Fragment
+        );
+
+
+        if (PastStates.Count > 0)
+        {
+            var enterTransitionForPastState = TransitionsProvider?.Invoke(TargetState, GetLastStateOrDefault(1)!);
+
+            for (int pastStateIndexFromEnd = 1; pastStateIndexFromEnd <= PastStates.Count; pastStateIndexFromEnd++)
+            {
+                var pastState = PastStates[^pastStateIndexFromEnd];
+                var pastStateCase = getStateCase(pastState.State);
+                
+                var exitTransitionForPastState = TransitionsProvider?.Invoke(GetLastStateOrDefault(pastStateIndexFromEnd), GetLastStateOrDefault(pastStateIndexFromEnd + 1)!);
+                
+                paramsOfStatesToRender[pastStateIndexFromEnd] = new AnimatedVisibilityParameters(
+                    Visible: false,
+                    Enter: enterTransitionForPastState?.FromPreviousStateEnter ?? pastStateCase.Enter ?? SharedEnter,
+                    Exit: exitTransitionForPastState?.ToNextStateStateExit ?? pastStateCase.Exit ?? SharedExit,
+                    StartWithTransition: false,
+                    OnHidden: new EventCallback(this, () => OnPastStateElementWasHidden(pastState)),
+                    OnShown: default,
+                    Key: pastState.Key,
+                    Fragment: pastStateCase.Fragment
+                );
+
+                enterTransitionForPastState = exitTransitionForPastState;
+            }
+        }
+
+        
+        if (!NewStateOnTop)
+            return
+                @<text>
+                    @for (int stateIndex = 0; stateIndex < paramsOfStatesToRender.Length; stateIndex++)
+                    {
+                        var parameters = paramsOfStatesToRender[stateIndex];
+
+                        <AnimatedVisibility Visible=@(parameters.Visible)
+                                            Enter=@(parameters.Enter)
+                                            Exit=@(parameters.Exit)
+                                            StartWithTransition=@(parameters.StartWithTransition)
+                                            OnHidden=@(parameters.OnHidden)
+                                            OnShown=@(parameters.OnShown)
+                                            Class="animated-content-item"
+                                            @key=@(parameters.Key)>
+                            @(parameters.Fragment)
+                        </AnimatedVisibility>
+                    }
+                </text>;
+
+        return
+            @<text>
+                @for (int stateIndex = paramsOfStatesToRender.Length - 1; stateIndex >= 0; stateIndex--)
+                {
+                    var parameters = paramsOfStatesToRender[stateIndex];
+
+                    <AnimatedVisibility Visible=@(parameters.Visible)
+                                        Enter=@(parameters.Enter)
+                                        Exit=@(parameters.Exit)
+                                        StartWithTransition=@(parameters.StartWithTransition)
+                                        OnHidden=@(parameters.OnHidden)
+                                        OnShown=@(parameters.OnShown)
                                         Class="animated-content-item"
-                                        @key=@pastState.Key>
-                        @pastStateCase.Fragment
+                                        @key=@(parameters.Key)>
+                        @(parameters.Fragment)
                     </AnimatedVisibility>
                 }
-            }
+            </text>;
+    }
 
-            else
+    private RenderFragment RenderStates2(Func<TState, StateSwitchCase> getStateCase)
+    {
+        var statesToRender = new RenderFragment[PastStates.Count + 1];
+
+        var targetStateCase = getStateCase(TargetState);
+        var targetTransitions = TransitionsProvider?.Invoke(default, TargetState);
+
+        statesToRender[0] = 
+            @<AnimatedVisibility Visible
+                                 Enter=@(targetTransitions?.FromPreviousStateEnter ?? targetStateCase.Enter ?? SharedEnter)
+                                 Exit=@(targetTransitions?.ToNextStateStateExit ?? targetStateCase.Exit ?? SharedExit)
+                                 StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
+                                 Class="animated-content-item"
+                                 OnShown=@OnTargetStateElementWasShown
+                                 @key=@CurrentStateKey>
+                @targetStateCase.Fragment
+            </AnimatedVisibility>;
+
+
+        if (PastStates.Count > 0)
+        {
+            var from = TargetState;
+            var to = GetLastStateOrDefault(1)!;
+            var enterTransitionForPastState = TransitionsProvider?.Invoke(TargetState, GetLastStateOrDefault(1)!);
+
+            for (int pastStateIndexFromEnd = 1; pastStateIndexFromEnd <= PastStates.Count; pastStateIndexFromEnd++)
             {
-                @foreach (var pastState in PastStates)
-                {
-                    var pastStateCase = getStateCase(pastState.State);
+                var pastState = PastStates[^pastStateIndexFromEnd];
+                var pastStateCase = getStateCase(pastState.State);
+                
+                from = GetLastStateOrDefault(2)!;
+                to = GetLastStateOrDefault(1)!;
 
-                    <AnimatedVisibility Visible="false"
-                                        Enter=@(pastStateCase.Enter ?? SharedEnter)
-                                        Exit=@(pastStateCase.Exit ?? SharedExit)
-                                        OnHidden=@(() => OnPastStateElementWasHidden(pastState))
-                                        Class="animated-content-item"
-                                        @key=@pastState.Key>
+
+                var exitTransitionForPastState = TransitionsProvider?.Invoke(GetLastStateOrDefault(pastStateIndexFromEnd), GetLastStateOrDefault(pastStateIndexFromEnd + 1)!);
+
+                statesToRender[pastStateIndexFromEnd] = 
+                    @<AnimatedVisibility Visible="false"
+                                         Enter=@(enterTransitionForPastState?.FromPreviousStateEnter ?? pastStateCase.Enter ?? SharedEnter)
+                                         Exit=@(exitTransitionForPastState?.ToNextStateStateExit ?? pastStateCase.Exit ?? SharedExit)
+                                         OnHidden=@(() => OnPastStateElementWasHidden(pastState))
+                                         Class="animated-content-item"
+                                         @key=@pastState.Key>
                         @pastStateCase.Fragment
-                    </AnimatedVisibility>
-                }
+                    </AnimatedVisibility>;
 
-                var targetStateCase = getStateCase(TargetState);
-
-                <AnimatedVisibility Visible
-                                    Enter=@(targetStateCase.Enter ?? SharedEnter)
-                                    Exit=@(targetStateCase.Exit ?? SharedExit)
-                                    StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
-                                    Class="animated-content-item"
-                                    OnShown=@OnTargetStateElementWasShown
-                                    @key=@CurrentStateKey>
-                    @targetStateCase.Fragment
-                </AnimatedVisibility>
+                enterTransitionForPastState = exitTransitionForPastState;
             }
-        </text>;
+        }
+
+        if (!NewStateOnTop)
+            return
+                @<text>
+                    @for (int stateIndex = 0; stateIndex < statesToRender.Length; stateIndex++)
+                    {
+                        @:@statesToRender[stateIndex]
+                    }
+                </text>;
+
+        return
+            @<text>
+                @for (int stateIndex = statesToRender.Length - 1; stateIndex >= 0; stateIndex--)
+                {
+                    @:@statesToRender[stateIndex]
+                }
+            </text>;
+    }
+
+    private record AnimatedVisibilityParameters(
+        bool Visible,
+        EnterTransition? Enter,
+        ExitTransition? Exit,
+        bool StartWithTransition,
+        EventCallback OnHidden,
+        EventCallback OnShown,
+        int Key,
+        RenderFragment Fragment
+    );
+
+    private TState? GetLastStateOrDefault(int? forPastStateWithIndexFromEnd = null)
+    {
+        if (PastStates.Count == 0)
+            return default;
+
+        if (!forPastStateWithIndexFromEnd.HasValue)
+            return PastStates.Last().State;
+
+        if (PastStates.Count < forPastStateWithIndexFromEnd.Value)
+            return default;
+
+        return PastStates[^forPastStateWithIndexFromEnd.Value].State;
+    }
 }
