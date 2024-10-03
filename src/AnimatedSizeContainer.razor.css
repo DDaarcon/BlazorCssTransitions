@@ -6,17 +6,15 @@
     width: fit-content;
 }
 
-.animated-size-container.fill-width,
-.animated-size-container.fill-width .animated-size-container-mask
-{
-    width: 100%;
-}
+    .animated-size-container.fill-width,
+    .animated-size-container.fill-width .animated-size-container-mask {
+        width: 100%;
+    }
 
-.animated-size-container.fill-height,
-.animated-size-container.fill-height .animated-size-container-mask
-{
-    height: 100%;
-}
+    .animated-size-container.fill-height,
+    .animated-size-container.fill-height .animated-size-container-mask {
+        height: 100%;
+    }
 
 .animated-size-container-mask {
     height: fit-content;

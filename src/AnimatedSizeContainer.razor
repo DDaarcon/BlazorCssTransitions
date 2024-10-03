@@ -35,6 +35,15 @@
     [Parameter]
     public string? Style { get; set; }
 
+    /// <summary>
+    /// Forces recalculation
+    /// </summary>
+    public async Task Recalculate()
+    {
+        await UpdateTargetSize();
+    }
+
+
     private ElementReference MaskReference { get; set; }
 
     private string ContainerClass
@@ -85,6 +94,11 @@
     {
         _afterFirstRender = true;
 
+        await UpdateTargetSize();
+    }
+
+    private async Task UpdateTargetSize()
+    {
         var maskSize = await _jsInteropEntryPoint.MeasureElementScroll(MaskReference);
 
         if (_containerHeight != maskSize.Height
