@@ -137,8 +137,8 @@ public partial class AnimatedVisibility
     {
         var longestDuration = _currentState switch
         {
-            State.Showing => GetLongestDurationFromSpecifications(_enter.GetSpecifications()),
-            State.Hiding => GetLongestDurationFromSpecifications(_exit.GetSpecifications()),
+            State.Showing => _enter.GetSpecifications().GetLongestTotalDuration(),
+            State.Hiding => _exit.GetSpecifications().GetLongestTotalDuration(),
             _ => throw new Exception($"State {_currentState} is not intermediate")
         };
 
