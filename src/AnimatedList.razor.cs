@@ -1,6 +1,6 @@
 ﻿using BlazorCssTransitions.AnimatedListInternal;
 using BlazorCssTransitions.AnimatedVisibilityTransitions;
-using BlazorCssTransitions.Help;
+using BlazorCssTransitions.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;

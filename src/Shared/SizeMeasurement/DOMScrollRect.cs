@@ -1,4 +1,4 @@
-﻿namespace BlazorCssTransitions.JsInterop;
+﻿namespace BlazorCssTransitions.Shared.JsInterop;
 
 internal record DOMScrollRect(
     double Width,

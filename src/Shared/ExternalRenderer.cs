@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 
-namespace BlazorCssTransitions.Help;
+namespace BlazorCssTransitions.Shared;
 
 /// <remarks>
 /// Intended as singleton/scoped

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlazorCssTransitions.Help;
+namespace BlazorCssTransitions.Shared;
 internal static class Assertions
 {
     internal static TProperty AssertNotNullAndGet<TProperty>(ref TProperty? nullableValue, string missingExceptionMessage)

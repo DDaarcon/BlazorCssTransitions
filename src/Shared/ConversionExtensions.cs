@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlazorCssTransitions.Help;
+namespace BlazorCssTransitions.Shared;
 
 internal static class ConversionExtensions
 {

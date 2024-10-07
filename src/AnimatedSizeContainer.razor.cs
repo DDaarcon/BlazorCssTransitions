@@ -1,4 +1,5 @@
-﻿using BlazorCssTransitions.Help;
+﻿using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.JsInterop;
 using BlazorCssTransitions.Specifications;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -11,6 +12,8 @@ namespace BlazorCssTransitions;
 
 public partial class AnimatedSizeContainer : IDisposable
 {
+    [Inject]
+    private JsSizeMeter _sizeMeter { get; init; } = default!;
 
     [Parameter, EditorRequired]
     public required RenderFragment ChildContent { get; set; }
@@ -102,7 +105,7 @@ public partial class AnimatedSizeContainer : IDisposable
 
     private async Task UpdateTargetSize()
     {
-        var maskSize = await _jsInteropEntryPoint.MeasureElementScroll(MaskReference);
+        var maskSize = await _sizeMeter.MeasureElementScroll(MaskReference);
 
         if (_containerHeight == maskSize.Height
             && _containerWidth == maskSize.Width)

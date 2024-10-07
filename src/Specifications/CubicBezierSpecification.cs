@@ -1,4 +1,4 @@
-﻿using BlazorCssTransitions.Help;
+﻿using BlazorCssTransitions.Shared;
 
 namespace BlazorCssTransitions.Specifications;
 

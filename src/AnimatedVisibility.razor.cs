@@ -1,5 +1,5 @@
 ﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
-using BlazorCssTransitions.JsInterop;
+using BlazorCssTransitions.Shared.JsInterop;
 using BlazorCssTransitions.Specifications;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -13,7 +13,7 @@ namespace BlazorCssTransitions;
 public partial class AnimatedVisibility
 {
     [Inject]
-    internal JsInteropEntryPoint _jsInteropEntryPoint { get; set; } = default!;
+    internal JsSizeMeter _sizeMeter { get; set; } = default!;
 
     [Parameter, EditorRequired]
     public required bool Visible { get; set; }
@@ -103,12 +103,12 @@ public partial class AnimatedVisibility
 
     internal async ValueTask<DOMScrollRect> GetScrollRect()
     {
-        return await _jsInteropEntryPoint.MeasureElementScroll(Container);
+        return await _sizeMeter.MeasureElementScroll(Container);
     }
 
     internal async ValueTask<DOMRect> GetRect()
     {
-        return await _jsInteropEntryPoint.MeasureElement(Container);
+        return await _sizeMeter.MeasureElement(Container);
     }
 
 

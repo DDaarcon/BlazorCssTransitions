@@ -1,4 +1,4 @@
-﻿using BlazorCssTransitions.Help;
+﻿using BlazorCssTransitions.Shared;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;

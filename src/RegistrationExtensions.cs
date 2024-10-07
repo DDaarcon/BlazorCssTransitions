@@ -1,5 +1,6 @@
-﻿using BlazorCssTransitions.Help;
-using BlazorCssTransitions.JsInterop;
+﻿using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.JsInterop;
+using BlazorCssTransitions.Shared.SizeMeasurement;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,9 @@ public static class RegistrationExtensions
 {
     public static IServiceCollection AddBlazorCssAnimations(this IServiceCollection collection)
     {
-        collection.AddScoped<JsInteropEntryPoint>();
+        collection.AddScoped<JsSizeMeter>();
+        collection.AddScoped<JsSizeObserver>();
+
         collection.AddScoped<ExternalRenderer>();
 
         collection.AddTransient<AnimatedListInternal.ItemsCollection>();

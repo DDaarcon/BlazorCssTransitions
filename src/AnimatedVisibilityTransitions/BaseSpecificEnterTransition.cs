@@ -1,4 +1,4 @@
-﻿using BlazorCssTransitions.Help;
+﻿using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Specifications;
 
 namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
