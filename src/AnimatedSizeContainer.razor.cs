@@ -1,5 +1,6 @@
 ﻿using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Shared.JsInterop;
+using BlazorCssTransitions.Shared.SizeMeasurement;
 using BlazorCssTransitions.Specifications;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -10,10 +11,12 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions;
 
-public partial class AnimatedSizeContainer : IDisposable
+public partial class AnimatedSizeContainer : IAsyncDisposable
 {
     [Inject]
     private JsSizeMeter _sizeMeter { get; init; } = default!;
+    [Inject]
+    private JsSizeObserver _sizeObserver { get; init; } = default!;
 
     [Parameter, EditorRequired]
     public required RenderFragment ChildContent { get; set; }
@@ -45,7 +48,9 @@ public partial class AnimatedSizeContainer : IDisposable
     /// </summary>
     public async Task Recalculate()
     {
-        await UpdateTargetSize();
+        var maskSize = await _sizeMeter.MeasureElementScroll(MaskReference);
+
+        UpdateTargetSize(maskSize);
     }
 
 
@@ -90,6 +95,8 @@ public partial class AnimatedSizeContainer : IDisposable
     private double _containerWidth;
     private bool _afterFirstRender;
 
+    private IAsyncDisposable? _resizeListener;
+
     protected override void OnParametersSet()
     {
         _spec = Spec ?? _defaultSpec;
@@ -97,16 +104,23 @@ public partial class AnimatedSizeContainer : IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _afterFirstRender = true;
+        if (!firstRender)
+            return;
 
-        await UpdateTargetSize();
+        _resizeListener = await _sizeObserver.ListenForElementSizeChanges(MaskReference, async size =>
+        {
+            await InvokeAsync(() =>
+            {
+                UpdateTargetSize(size);
+            });
+        });
+        
+        _afterFirstRender = true;
     }
 
 
-    private async Task UpdateTargetSize()
+    private void UpdateTargetSize(DOMScrollRect maskSize)
     {
-        var maskSize = await _sizeMeter.MeasureElementScroll(MaskReference);
-
         if (_containerHeight == maskSize.Height
             && _containerWidth == maskSize.Width)
         {
@@ -142,5 +156,13 @@ public partial class AnimatedSizeContainer : IDisposable
     public void Dispose()
     {
         _transitionTimer?.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _transitionTimer?.Dispose();
+
+        if (_resizeListener is not null)
+            await _resizeListener.DisposeAsync();
     }
 }
