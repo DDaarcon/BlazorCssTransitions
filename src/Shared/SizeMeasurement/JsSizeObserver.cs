@@ -28,12 +28,15 @@ internal class JsSizeObserver(IJSRuntime jsRuntime) : IAsyncDisposable
             OnTrigger = onTrigger
         };
         var callbackListenerJsInstance = DotNetObjectReference.Create(jsCallback);
+        jsCallback.DotNetReference = callbackListenerJsInstance;
 
         var jsResizeObserver = await module.InvokeAsync<IJSObjectReference>("listenForSizeChanges", element, callbackListenerJsInstance);
+
 
         jsCallback.OnDispose = async () =>
         {
             await module.InvokeVoidAsync("stopListeningFoSizeChanges", jsResizeObserver);
+            await jsResizeObserver.DisposeAsync();
         };
 
         return jsCallback;
@@ -41,12 +44,14 @@ internal class JsSizeObserver(IJSRuntime jsRuntime) : IAsyncDisposable
 
     internal class JsCallback<TCallbackParam>() : IAsyncDisposable
     {
+        public DotNetObjectReference<JsCallback<TCallbackParam>> DotNetReference { get; set; } = default!;
         public Func<TCallbackParam, Task> OnTrigger { get; init; } = default!;
         public Func<Task> OnDispose { get; set; } = default!;
 
         public async ValueTask DisposeAsync()
         {
             await OnDispose();
+            DotNetReference.Dispose();
         }
 
         [JSInvokable]

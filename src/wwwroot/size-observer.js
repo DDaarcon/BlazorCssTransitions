@@ -19,7 +19,12 @@ export function listenForSizeChanges(element, dotNetRef) {
       top: element.scrollTop
     }
 
-    dotNetRef.invokeMethodAsync('Invoke', offsetRect);
+    try {
+      dotNetRef.invokeMethodAsync('Invoke', offsetRect);
+    }
+    catch (error) {
+      debugger
+    }
   });
 
   observer.observe(element);

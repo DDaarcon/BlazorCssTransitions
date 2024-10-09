@@ -91,8 +91,6 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
         }
     }
 
-    private double _containerHeight;
-    private double _containerWidth;
     private bool _afterFirstRender;
 
     private IAsyncDisposable? _resizeListener;
@@ -119,6 +117,8 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     }
 
 
+    private double _containerHeight;
+    private double _containerWidth;
     private void UpdateTargetSize(DOMScrollRect maskSize)
     {
         if (_containerHeight == maskSize.Height
