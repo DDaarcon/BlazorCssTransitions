@@ -34,7 +34,7 @@
         paramsOfStatesToRender[0] = new AnimatedVisibilityParameters(
             Visible: true,
             Enter: targetTransitions?.FromPreviousStateEnter ?? targetStateCase.Enter ?? SharedEnter,
-            Exit: targetTransitions?.ToNextStateStateExit ?? targetStateCase.Exit ?? SharedExit,
+            Exit: targetTransitions?.ToNextStateExit ?? targetStateCase.Exit ?? SharedExit,
             StartWithTransition: StartWithTransition || HasInitialTargetStateBeenShown,
             OnHidden: default,
             OnShown: new EventCallback(this, () => OnTargetStateElementWasShown()),
@@ -57,7 +57,7 @@
                 paramsOfStatesToRender[pastStateIndexFromEnd] = new AnimatedVisibilityParameters(
                     Visible: false,
                     Enter: enterTransitionForPastState?.FromPreviousStateEnter ?? pastStateCase.Enter ?? SharedEnter,
-                    Exit: exitTransitionForPastState?.ToNextStateStateExit ?? pastStateCase.Exit ?? SharedExit,
+                    Exit: exitTransitionForPastState?.ToNextStateExit ?? pastStateCase.Exit ?? SharedExit,
                     StartWithTransition: false,
                     OnHidden: new EventCallback(this, () => OnPastStateElementWasHidden(pastState)),
                     OnShown: default,
@@ -106,74 +106,6 @@
                                         @key=@(parameters.Key)>
                         @(parameters.Fragment)
                     </AnimatedVisibility>
-                }
-            </text>;
-    }
-
-    private RenderFragment RenderStates2(Func<TState, StateSwitchCase> getStateCase)
-    {
-        var statesToRender = new RenderFragment[PastStates.Count + 1];
-
-        var targetStateCase = getStateCase(TargetState);
-        var targetTransitions = TransitionsProvider?.Invoke(default, TargetState);
-
-        statesToRender[0] = 
-            @<AnimatedVisibility Visible
-                                 Enter=@(targetTransitions?.FromPreviousStateEnter ?? targetStateCase.Enter ?? SharedEnter)
-                                 Exit=@(targetTransitions?.ToNextStateStateExit ?? targetStateCase.Exit ?? SharedExit)
-                                 StartWithTransition=@(StartWithTransition || HasInitialTargetStateBeenShown)
-                                 Class="animated-content-item"
-                                 OnShown=@OnTargetStateElementWasShown
-                                 @key=@CurrentStateKey>
-                @targetStateCase.Fragment
-            </AnimatedVisibility>;
-
-
-        if (PastStates.Count > 0)
-        {
-            var from = TargetState;
-            var to = GetLastStateOrDefault(1)!;
-            var enterTransitionForPastState = TransitionsProvider?.Invoke(TargetState, GetLastStateOrDefault(1)!);
-
-            for (int pastStateIndexFromEnd = 1; pastStateIndexFromEnd <= PastStates.Count; pastStateIndexFromEnd++)
-            {
-                var pastState = PastStates[^pastStateIndexFromEnd];
-                var pastStateCase = getStateCase(pastState.State);
-                
-                from = GetLastStateOrDefault(2)!;
-                to = GetLastStateOrDefault(1)!;
-
-
-                var exitTransitionForPastState = TransitionsProvider?.Invoke(GetLastStateOrDefault(pastStateIndexFromEnd), GetLastStateOrDefault(pastStateIndexFromEnd + 1)!);
-
-                statesToRender[pastStateIndexFromEnd] = 
-                    @<AnimatedVisibility Visible="false"
-                                         Enter=@(enterTransitionForPastState?.FromPreviousStateEnter ?? pastStateCase.Enter ?? SharedEnter)
-                                         Exit=@(exitTransitionForPastState?.ToNextStateStateExit ?? pastStateCase.Exit ?? SharedExit)
-                                         OnHidden=@(() => OnPastStateElementWasHidden(pastState))
-                                         Class="animated-content-item"
-                                         @key=@pastState.Key>
-                        @pastStateCase.Fragment
-                    </AnimatedVisibility>;
-
-                enterTransitionForPastState = exitTransitionForPastState;
-            }
-        }
-
-        if (!NewStateOnTop)
-            return
-                @<text>
-                    @for (int stateIndex = 0; stateIndex < statesToRender.Length; stateIndex++)
-                    {
-                        @:@statesToRender[stateIndex]
-                    }
-                </text>;
-
-        return
-            @<text>
-                @for (int stateIndex = statesToRender.Length - 1; stateIndex >= 0; stateIndex--)
-                {
-                    @:@statesToRender[stateIndex]
                 }
             </text>;
     }

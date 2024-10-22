@@ -120,7 +120,7 @@ public partial class AnimatedContent<TState>
     public class InterstateTransitions
     {
         public EnterTransition? FromPreviousStateEnter { get; set; }
-        public ExitTransition? ToNextStateStateExit { get; set; }
+        public ExitTransition? ToNextStateExit { get; set; }
     }
 
     public delegate InterstateTransitions? GetTransitions(TState? fromState, TState? toState);
