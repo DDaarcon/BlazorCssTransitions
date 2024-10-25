@@ -11,14 +11,14 @@ namespace BlazorCssTransitions;
 public partial class AnimatedContent<TState>
 {
     [Parameter, EditorRequired]
-    public required TState TargetState { get; set; }
+    public required TState? TargetState { get; set; }
     private TState? _targetState;
 
     [Parameter]
-    public Func<TState, StateSwitchCase>? Switch { get; set; }
+    public Func<TState?, StateSwitchCase>? Switch { get; set; }
 
     [Parameter]
-    public RenderFragment<TState>? ChildContent { get; set; }
+    public RenderFragment<TState?>? ChildContent { get; set; }
     [Parameter]
     public GetTransitions? TransitionsProvider { get; set; }
 
@@ -29,7 +29,7 @@ public partial class AnimatedContent<TState>
     public bool StartWithTransition { get; set; }
 
     [Parameter]
-    public EventCallback<TState> OnContentChange { get; set; }
+    public EventCallback<TState?> OnContentChange { get; set; }
 
     [Parameter]
     public string? Style { get; set; }
@@ -46,12 +46,14 @@ public partial class AnimatedContent<TState>
     private int CurrentStateKey { get; set; } = 0;
     private bool HasInitialTargetStateBeenShown { get; set; } = false;
 
+    private bool _isInitialParametersSet = false;
+
     protected override void OnParametersSet()
     {
         if (TargetState is not null
             && !EqualityComparer<TState>.Default.Equals(_targetState, TargetState))
         {
-            if (_targetState is not null)
+            if (_isInitialParametersSet)
             {
                 PastStates.Add(new StateRecord
                 {
@@ -62,6 +64,9 @@ public partial class AnimatedContent<TState>
 
             _targetState = TargetState;
         }
+
+        if (!_isInitialParametersSet)
+            _isInitialParametersSet = true;
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -99,7 +104,7 @@ public partial class AnimatedContent<TState>
     private readonly struct StateRecord
     {
         public required int Key { get; init; }
-        public required TState State { get; init; }
+        public required TState? State { get; init; }
     }
 
     public class StateSwitchCase

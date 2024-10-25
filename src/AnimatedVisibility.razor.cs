@@ -1,4 +1,5 @@
 ﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
+using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Shared.JsInterop;
 using BlazorCssTransitions.Specifications;
 using Microsoft.AspNetCore.Components;
@@ -143,11 +144,8 @@ public partial class AnimatedVisibility
         };
 
         _transitionTimer?.Dispose();
-        _transitionTimer = new(longestDuration);
-
-        _transitionTimer.Elapsed += (sender, args) =>
+        _transitionTimer = TimerHelper.StartNewOneTimeTimer(longestDuration, () =>
         {
-            _transitionTimer.Dispose();
             InvokeAsync(() =>
             {
                 switch (_currentState)
@@ -167,8 +165,7 @@ public partial class AnimatedVisibility
                 OnStateChanged.InvokeAsync(_currentState);
                 StateHasChanged();
             });
-        };
-        _transitionTimer.Start();
+        });
     }
 
     private static TimeSpan GetLongestDurationFromSpecifications(IEnumerable<Specification> specifications)

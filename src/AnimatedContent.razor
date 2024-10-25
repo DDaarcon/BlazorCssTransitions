@@ -24,7 +24,7 @@
 
 @code {
 
-    private RenderFragment RenderStates(Func<TState, StateSwitchCase> getStateCase)
+    private RenderFragment RenderStates(Func<TState?, StateSwitchCase> getStateCase)
     {
         var paramsOfStatesToRender = new AnimatedVisibilityParameters[PastStates.Count + 1];
         

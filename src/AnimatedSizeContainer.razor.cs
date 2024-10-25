@@ -140,17 +140,13 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     private void NotifyOnResizeFinish()
     {
         _transitionTimer?.Dispose();
-        _transitionTimer = new(_spec.GetTotalDuration());
-
-        _transitionTimer.Elapsed += (sender, args) =>
+        _transitionTimer = TimerHelper.StartNewOneTimeTimer(_spec.GetTotalDuration(), () =>
         {
-            _transitionTimer.Dispose();
             InvokeAsync(() =>
             {
                 OnResized.InvokeAsync();
             });
-        };
-        _transitionTimer.Start();
+        });
     }
 
     public void Dispose()
