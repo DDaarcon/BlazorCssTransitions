@@ -23,8 +23,8 @@ internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
         private protected set => _transitionedProperty = value;
     }
 
-    private Specification? _specification;
-    internal Specification Specification
+    private Spec? _specification;
+    internal Spec Specification
     {
         get => Assertions.AssertNotNullAndGet(ref _specification, "Animation specification must be set before transition is used.");
         private protected set => _specification = value;
@@ -97,6 +97,6 @@ internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
             """;
     }
 
-    internal override IEnumerable<Specification> GetSpecifications()
+    internal override IEnumerable<Spec> GetSpecifications()
         => [Specification];
 }

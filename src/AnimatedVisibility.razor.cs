@@ -168,7 +168,7 @@ public partial class AnimatedVisibility
         });
     }
 
-    private static TimeSpan GetLongestDurationFromSpecifications(IEnumerable<Specification> specifications)
+    private static TimeSpan GetLongestDurationFromSpecifications(IEnumerable<Spec> specifications)
         => specifications.Select(x => x.Duration + x.Delay).Max();
 
 

@@ -4,7 +4,7 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal sealed class SlideInEnterTransition : BaseSpecificEnterTransition
 {
-    public SlideInEnterTransition(Specification spec, string initialOffsetX, string initialOffsetY)
+    public SlideInEnterTransition(Spec spec, string initialOffsetX, string initialOffsetY)
     {
         TransitionAllTimeStyle = $"""
             --start-slide-in-offset-x: {initialOffsetX};

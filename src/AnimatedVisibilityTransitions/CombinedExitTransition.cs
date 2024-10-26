@@ -16,7 +16,7 @@ internal class CombinedExitTransition : BaseCombinedTransition<ExitTransition, B
     public CombinedExitTransition(ExitTransition firstTransition, ExitTransition secondTransition) : base(firstTransition, secondTransition)
     { }
 
-    public ExitTransition CloneWith(Func<Specification, Specification> specTranformer)
+    public ExitTransition CloneWith(Func<Spec, Spec> specTranformer)
     {
         return new CombinedExitTransition(_transitions.Select(x => (BaseSpecificExitTransition)x.CloneWith(specTranformer)));
     }

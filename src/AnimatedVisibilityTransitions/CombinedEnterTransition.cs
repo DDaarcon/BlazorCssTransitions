@@ -16,7 +16,7 @@ internal sealed class CombinedEnterTransition : BaseCombinedTransition<EnterTran
     public CombinedEnterTransition(EnterTransition firstTransition, EnterTransition secondTransition) : base(firstTransition, secondTransition)
     { }
 
-    public EnterTransition CloneWith(Func<Specification, Specification> specTranformer)
+    public EnterTransition CloneWith(Func<Spec, Spec> specTranformer)
     {
         return new CombinedEnterTransition(_transitions.Select(x => (BaseSpecificEnterTransition)x.CloneWith(specTranformer)));
     }

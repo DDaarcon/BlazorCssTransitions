@@ -14,5 +14,5 @@ internal abstract class BaseTransition : IBaseTransition
     abstract internal string GetInitialClasses();
     abstract internal string GetFinishClasses();
 
-    abstract internal IEnumerable<Specification> GetSpecifications();
+    abstract internal IEnumerable<Spec> GetSpecifications();
 }

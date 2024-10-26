@@ -57,6 +57,6 @@ internal abstract class BaseCombinedTransition<TTransition, TSpecificTransition>
         transition: {String.Join(", ", _transitions.Select(x => x.Specification.GetTransitionValue(x.TransitionedProperty)))};
         """;
 
-    internal override IEnumerable<Specification> GetSpecifications()
+    internal override IEnumerable<Spec> GetSpecifications()
         => _transitions.Select(x => x.Specification);
 }

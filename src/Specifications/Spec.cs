@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace BlazorCssTransitions.Specifications;
 
 // TODO remove unused properties
-public partial class Specification
+public partial class Spec
 {
-    protected Specification() { }
+    protected Spec() { }
 
     protected TimeSpan? _duration;
     protected TimeSpan? _delay;
@@ -28,9 +28,9 @@ public partial class Specification
         return $"transition: {animatedProperty} {Duration.ToCssDuration()} {Delay.ToCssDuration()} {TimingFunction};";
     }
 
-    public Specification CloneWith(TimeSpan? newDuration, TimeSpan? newDelay)
+    public Spec CloneWith(TimeSpan? newDuration, TimeSpan? newDelay)
     {
-        return new Specification
+        return new Spec
         {
             _duration = newDuration ?? Duration,
             _delay = newDelay ?? Delay,

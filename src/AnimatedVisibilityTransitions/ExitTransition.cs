@@ -9,17 +9,29 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 public interface ExitTransition : IBaseTransition
 {
-    public static ExitTransition FadeOut(Specification? spec = null, float initialOpacity = 1f, float finishOpacity = 0f)
+    public static ExitTransition FadeOut(Spec? spec = null, float initialOpacity = 1f, float finishOpacity = 0f)
         => new FadeOutExitTransition(
-            spec ?? Specification.Linear(),
+            spec ?? Spec.Linear(),
             initialOpacity,
             finishOpacity);
 
-    public static ExitTransition SlideOut(Specification? spec = null, string finishX = "-100%", string finishY = "0")
+    public static ExitTransition SlideOut(Spec? spec = null, string finishX = "-100%", string finishY = "0")
         => new SlideOutExitTransition(
-            spec ?? Specification.Linear(),
+            spec ?? Spec.Linear(),
             finishX,
             finishY);
+
+    public static ExitTransition SlideOutVertically(Spec? spec = null, string finishY = "100%")
+        => new SlideOutExitTransition(
+            spec ?? Spec.Linear(),
+            "0",
+            finishY);
+
+    public static ExitTransition SlideOutHorizontally(Spec? spec = null, string finishX = "-100%")
+        => new SlideOutExitTransition(
+            spec ?? Spec.Linear(),
+            finishX,
+            "0");
 
     public static ExitTransition operator +(ExitTransition firstTransition, ExitTransition secondTransition)
     {
@@ -28,5 +40,5 @@ public interface ExitTransition : IBaseTransition
 
     public ExitTransition CombineWith(ExitTransition anotherTransition);
 
-    public ExitTransition CloneWith(Func<Specification, Specification> specTranformer);
+    public ExitTransition CloneWith(Func<Spec, Spec> specTranformer);
 }

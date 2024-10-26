@@ -2,13 +2,15 @@
 
 namespace BlazorCssTransitions.Specifications;
 
-public partial class Specification
+public partial class Spec
 {
-    public static Specification EaseIn(TimeSpan? duration = null, TimeSpan? delay = null)
+    public static Spec EaseIn(TimeSpan? duration = null, TimeSpan? delay = null)
         => new EaseInSpecification(duration ?? TimeSpan.FromMilliseconds(200), delay ?? TimeSpan.Zero);
+    public static Spec EaseIn(double? durationMs, double? delayMs = null)
+        => new EaseInSpecification(TimeSpan.FromMilliseconds(durationMs ?? 200), TimeSpan.FromMilliseconds(delayMs ?? 0));
 }
 
-internal class EaseInSpecification : Specification
+internal class EaseInSpecification : Spec
 {
     public EaseInSpecification(TimeSpan duration, TimeSpan delay)
     {

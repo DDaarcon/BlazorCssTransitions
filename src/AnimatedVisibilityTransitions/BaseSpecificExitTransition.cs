@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 internal abstract class BaseSpecificExitTransition : BaseSpecificTransition<ExitTransition>, ExitTransition
 {
-    public ExitTransition CloneWith(Func<Specification, Specification> specTranformer)
+    public ExitTransition CloneWith(Func<Spec, Spec> specTranformer)
     {
         var clone = ShallowClone();
         clone.Specification = specTranformer(clone.Specification);

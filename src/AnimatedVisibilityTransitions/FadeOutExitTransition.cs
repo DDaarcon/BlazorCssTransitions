@@ -10,7 +10,7 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal class FadeOutExitTransition : BaseSpecificExitTransition
 {
-    public FadeOutExitTransition(Specification spec, float initialOpacity, float finishOpacity)
+    public FadeOutExitTransition(Spec spec, float initialOpacity, float finishOpacity)
     {
         TransitionAllTimeStyle = $"""
             --start-fade-out-opacity: {initialOpacity.ToCss()};

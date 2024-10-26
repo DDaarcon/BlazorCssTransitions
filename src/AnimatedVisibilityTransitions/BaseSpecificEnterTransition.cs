@@ -5,7 +5,7 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal abstract class BaseSpecificEnterTransition : BaseSpecificTransition<EnterTransition>, EnterTransition
 {
-    public EnterTransition CloneWith(Func<Specification, Specification> specTranformer)
+    public EnterTransition CloneWith(Func<Spec, Spec> specTranformer)
     {
         var clone = ShallowClone();
         clone.Specification = specTranformer(clone.Specification);

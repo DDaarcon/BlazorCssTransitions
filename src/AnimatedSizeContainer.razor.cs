@@ -22,9 +22,9 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     public required RenderFragment ChildContent { get; set; }
 
     [Parameter]
-    public Specification? Spec { get; set; }
-    private Specification _spec = default!;
-    private readonly static Specification _defaultSpec = Specification.Linear();
+    public Spec? Spec { get; set; }
+    private Spec _spec = default!;
+    private readonly static Spec _defaultSpec = Spec.Linear();
 
     [Parameter]
     public bool FillWidth { get; set; } = false;

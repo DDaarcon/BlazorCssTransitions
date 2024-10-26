@@ -10,7 +10,7 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal sealed class FadeInEnterTransition : BaseSpecificEnterTransition
 {
-    public FadeInEnterTransition(Specification spec, float initialOpacity, float finishOpacity)
+    public FadeInEnterTransition(Spec spec, float initialOpacity, float finishOpacity)
     {
         TransitionAllTimeStyle = $"""
             --start-fade-in-opacity: {initialOpacity.ToCss()};

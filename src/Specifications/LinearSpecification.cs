@@ -8,13 +8,16 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions.Specifications;
 
-public partial class Specification
+public partial class Spec
 {
-    public static Specification Linear(TimeSpan? duration = null, TimeSpan? delay = null)
+    public static Spec Linear(TimeSpan? duration = null, TimeSpan? delay = null)
         => new LinearSpecification(duration ?? TimeSpan.FromMilliseconds(200), delay ?? TimeSpan.Zero);
+
+    public static Spec Linear(double? durationMs, double? delayMs = null)
+        => new LinearSpecification(TimeSpan.FromMilliseconds(durationMs ?? 200), TimeSpan.FromMilliseconds(delayMs ?? 0));
 }
 
-internal class LinearSpecification : Specification
+internal class LinearSpecification : Spec
 {
     public LinearSpecification(TimeSpan duration, TimeSpan delay)
     {

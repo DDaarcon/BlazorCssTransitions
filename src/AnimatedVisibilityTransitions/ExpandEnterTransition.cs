@@ -10,7 +10,7 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal class ExpandEnterTransition : BaseSpecificEnterTransition
 {
-    public ExpandEnterTransition(Specification spec, float startScaleX, float startScaleY, float finishScaleX, float finishScaleY)
+    public ExpandEnterTransition(Spec spec, float startScaleX, float startScaleY, float finishScaleX, float finishScaleY)
     {
         TransitionAllTimeStyle = $"""
             --start-expand-scale-x: {startScaleX.ToCss()};
