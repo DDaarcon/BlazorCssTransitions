@@ -56,7 +56,6 @@ public partial class AnimatedVisibility
     private State _currentState;
 
     private bool _isFirstRender;
-    private bool _isFirstTransition;
 
     protected override void OnInitialized()
     {
@@ -72,22 +71,35 @@ public partial class AnimatedVisibility
         };
 
         _isFirstRender = true;
-        _isFirstTransition = true;
     }
 
     protected override void OnParametersSet()
     {
         if (_isFirstRender)
         {
+            _shouldRender = true;
             _isFirstRender = false;
             OnStateChanged.InvokeAsync(_currentState);
             return;
         }
 
-        _enter = (BaseTransition?)Enter ?? _enter;
-        _exit = (BaseTransition?)Exit ?? _exit;
-        SetNewStateAfterParametersSet();
+        if (Enter is null
+            || _enter != Enter)
+        {
+            _shouldRender = true;
+            _enter = (BaseTransition?)Enter ?? _enter;
+        }
+        if (Exit is null
+            || _exit != Exit)
+        {
+            _shouldRender = true;
+            _exit = (BaseTransition?)Exit ?? _exit;
+        }
+
+        SetIntermediateState();
     }
+
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -95,26 +107,21 @@ public partial class AnimatedVisibility
         {
             await Task.Delay(TimeSpan.FromMilliseconds(20)); // TODO find a better way
 
-            SetNewStateAfterParametersSet();
+            SetIntermediateState();
             StateHasChanged();
         }
     }
 
-
-
-    internal async ValueTask<DOMScrollRect> GetScrollRect()
+    private bool _shouldRender;
+    protected override bool ShouldRender()
     {
-        return await _sizeMeter.MeasureElementScroll(Container);
-    }
-
-    internal async ValueTask<DOMRect> GetRect()
-    {
-        return await _sizeMeter.MeasureElement(Container);
+        var shouldRender = _shouldRender;
+        _shouldRender = false;
+        return shouldRender;
     }
 
 
-
-    private void SetNewStateAfterParametersSet()
+    private void SetIntermediateState()
     {
         if ((Visible && _currentState is State.Showing or State.Shown)
             || (!Visible && _currentState is State.Hiding or State.Hidden))
@@ -127,6 +134,7 @@ public partial class AnimatedVisibility
             : State.Hiding;
 
         _currentState = newState;
+        _shouldRender = true;
         OnStateChanged.InvokeAsync(_currentState);
         OnSetIntermediateState();
     }
@@ -161,16 +169,13 @@ public partial class AnimatedVisibility
                     default:
                         throw new Exception($"State {_currentState} is not intermediate");
                 }
+                _shouldRender = true;
 
                 OnStateChanged.InvokeAsync(_currentState);
                 StateHasChanged();
             });
         });
     }
-
-    private static TimeSpan GetLongestDurationFromSpecifications(IEnumerable<Spec> specifications)
-        => specifications.Select(x => x.Duration + x.Delay).Max();
-
 
     private string GetContainerStyle()
     {

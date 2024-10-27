@@ -103,7 +103,9 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
+        {
             return;
+        }
 
         _resizeListener = await _sizeObserver.ListenForElementSizeChanges(MaskReference, async size =>
         {
@@ -114,6 +116,7 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
         });
         
         _afterFirstRender = true;
+        await Recalculate();
     }
 
 

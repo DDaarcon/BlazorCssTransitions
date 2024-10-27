@@ -46,14 +46,14 @@ public partial class AnimatedContent<TState>
     private int CurrentStateKey { get; set; } = 0;
     private bool HasInitialTargetStateBeenShown { get; set; } = false;
 
-    private bool _isInitialParametersSet = false;
+    private bool _hasInitialParametersBeenSet = false;
 
     protected override void OnParametersSet()
     {
         if (TargetState is not null
             && !EqualityComparer<TState>.Default.Equals(_targetState, TargetState))
         {
-            if (_isInitialParametersSet)
+            if (_hasInitialParametersBeenSet)
             {
                 PastStates.Add(new StateRecord
                 {
@@ -63,16 +63,27 @@ public partial class AnimatedContent<TState>
             }
 
             _targetState = TargetState;
+            _shouldRender = true;
         }
 
-        if (!_isInitialParametersSet)
-            _isInitialParametersSet = true;
+        if (!_hasInitialParametersBeenSet)
+            _hasInitialParametersBeenSet = true;
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
         HasInitialTargetStateBeenShown = true;
     }
+
+
+    private bool _shouldRender;
+    protected override bool ShouldRender()
+    {
+        var shouldRender = _shouldRender;
+        _shouldRender = false;
+        return shouldRender;
+    }
+
 
     private async Task OnTargetStateElementWasShown()
     {
@@ -82,6 +93,7 @@ public partial class AnimatedContent<TState>
     private void OnPastStateElementWasHidden(StateRecord pastState)
     {
         PastStates.Remove(pastState);
+        _shouldRender = true;
     }
 
     private string ContainerStyles
