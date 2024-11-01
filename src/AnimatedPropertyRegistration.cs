@@ -9,9 +9,8 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions;
 
-public class AnimatedPropertyRegistration 
-	: 
-		IAnimatedPropertyColorRegistration, IAnimatedPropertyLengthRegistration,
+internal class AnimatedPropertyRegistration 
+	: IAnimatedPropertyColorRegistration, IAnimatedPropertyLengthRegistration,
 		IAnimatedPropertyPercentageRegistration, IAnimatedPropertyLengthPercentageRegistration
 {
 	public string FullName => _fullName;

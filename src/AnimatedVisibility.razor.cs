@@ -51,11 +51,10 @@ public partial class AnimatedVisibility
     public EventCallback<State> OnStateChanged { get; set; }
 
 
-    private ElementReference Container { get; set; }
 
     private State _currentState;
-
     private bool _isFirstRender;
+
 
     protected override void OnInitialized()
     {
@@ -73,13 +72,13 @@ public partial class AnimatedVisibility
         _isFirstRender = true;
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (_isFirstRender)
         {
             _shouldRender = true;
             _isFirstRender = false;
-            OnStateChanged.InvokeAsync(_currentState);
+            await NotifyAboutStateChange();
             return;
         }
 
@@ -96,7 +95,7 @@ public partial class AnimatedVisibility
             _exit = (BaseTransition?)Exit ?? _exit;
         }
 
-        SetIntermediateState();
+        await SetIntermediateState();
     }
 
 
@@ -107,7 +106,7 @@ public partial class AnimatedVisibility
         {
             await Task.Delay(TimeSpan.FromMilliseconds(20)); // TODO find a better way
 
-            SetIntermediateState();
+            await SetIntermediateState();
             StateHasChanged();
         }
     }
@@ -121,7 +120,7 @@ public partial class AnimatedVisibility
     }
 
 
-    private void SetIntermediateState()
+    private async Task SetIntermediateState()
     {
         if ((Visible && _currentState is State.Showing or State.Shown)
             || (!Visible && _currentState is State.Hiding or State.Hidden))
@@ -135,7 +134,8 @@ public partial class AnimatedVisibility
 
         _currentState = newState;
         _shouldRender = true;
-        OnStateChanged.InvokeAsync(_currentState);
+
+        await NotifyAboutStateChange();
         OnSetIntermediateState();
     }
 
@@ -154,28 +154,35 @@ public partial class AnimatedVisibility
         _transitionTimer?.Dispose();
         _transitionTimer = TimerHelper.StartNewOneTimeTimer(longestDuration, () =>
         {
-            InvokeAsync(() =>
+            InvokeAsync(async () =>
             {
-                switch (_currentState)
+                _currentState = _currentState switch
                 {
-                    case State.Showing:
-                        _currentState = State.Shown;
-                        OnShown.InvokeAsync();
-                        break;
-                    case State.Hiding:
-                        _currentState = State.Hidden;
-                        OnHidden.InvokeAsync();
-                        break;
-                    default:
-                        // let's say that element having state different that intermediate is not a critical error, just do not perform eny update
-                        return;
-                }
-                _shouldRender = true;
+                    State.Showing => State.Shown,
+                    State.Hiding => State.Hidden,
+                    _ => _currentState
+                };
 
-                OnStateChanged.InvokeAsync(_currentState);
+                await NotifyAboutStateChange();
+                _shouldRender = true;
                 StateHasChanged();
             });
         });
+    }
+
+    private async Task NotifyAboutStateChange()
+    {
+        switch (_currentState)
+        {
+            case State.Hidden:
+                await OnHidden.InvokeAsync();
+                break;
+            case State.Shown:
+                await OnShown.InvokeAsync();
+                break;
+        }
+
+        await OnStateChanged.InvokeAsync(_currentState);
     }
 
     private string GetContainerStyle()
