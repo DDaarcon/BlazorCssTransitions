@@ -63,7 +63,6 @@ public partial class AnimatedContent<TState>
             }
 
             _targetState = TargetState;
-            _shouldRender = true;
         }
 
         if (!_hasInitialParametersBeenSet)
@@ -76,15 +75,6 @@ public partial class AnimatedContent<TState>
     }
 
 
-    private bool _shouldRender;
-    protected override bool ShouldRender()
-    {
-        var shouldRender = _shouldRender;
-        _shouldRender = false;
-        return shouldRender;
-    }
-
-
     private async Task OnTargetStateElementWasShown()
     {
         await OnContentChange.InvokeAsync(TargetState);
@@ -93,7 +83,6 @@ public partial class AnimatedContent<TState>
     private void OnPastStateElementWasHidden(StateRecord pastState)
     {
         PastStates.Remove(pastState);
-        _shouldRender = true;
     }
 
     private string ContainerStyles

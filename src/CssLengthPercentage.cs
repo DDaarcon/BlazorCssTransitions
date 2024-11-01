@@ -12,9 +12,8 @@ namespace BlazorCssTransitions;
 public readonly struct CssLengthPercentage
 {
 	public static implicit operator CssLengthPercentage(string value) => new(value);
-	public static implicit operator CssLengthPercentage(CssLength value) => new(value);
-	public static implicit operator CssLengthPercentage(CssPercentage value) => new(value);
-	public static implicit operator string(CssLengthPercentage value) => value.ToString();
+	public static implicit operator CssLengthPercentage(CssLength value) => new(value.ToString());
+	public static implicit operator CssLengthPercentage(CssPercentage value) => new(value.ToString());
 
 	public override string ToString()
 		=> Assertions.AssertNotNullAndGet(_value, $"{typeof(CssLengthPercentage).Name} does not have a value");

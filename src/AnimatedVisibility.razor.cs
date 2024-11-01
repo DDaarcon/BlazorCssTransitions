@@ -13,9 +13,6 @@ namespace BlazorCssTransitions;
 
 public partial class AnimatedVisibility
 {
-    [Inject]
-    internal JsSizeMeter _sizeMeter { get; set; } = default!;
-
     [Parameter, EditorRequired]
     public required bool Visible { get; set; }
 
@@ -76,7 +73,6 @@ public partial class AnimatedVisibility
     {
         if (_isFirstRender)
         {
-            _shouldRender = true;
             _isFirstRender = false;
             await NotifyAboutStateChange();
             return;
@@ -85,13 +81,11 @@ public partial class AnimatedVisibility
         if (Enter is null
             || _enter != Enter)
         {
-            _shouldRender = true;
             _enter = (BaseTransition?)Enter ?? _enter;
         }
         if (Exit is null
             || _exit != Exit)
         {
-            _shouldRender = true;
             _exit = (BaseTransition?)Exit ?? _exit;
         }
 
@@ -111,15 +105,6 @@ public partial class AnimatedVisibility
         }
     }
 
-    private bool _shouldRender;
-    protected override bool ShouldRender()
-    {
-        var shouldRender = _shouldRender;
-        _shouldRender = false;
-        return shouldRender;
-    }
-
-
     private async Task SetIntermediateState()
     {
         if ((Visible && _currentState is State.Showing or State.Shown)
@@ -133,7 +118,6 @@ public partial class AnimatedVisibility
             : State.Hiding;
 
         _currentState = newState;
-        _shouldRender = true;
 
         await NotifyAboutStateChange();
         OnSetIntermediateState();
@@ -164,7 +148,6 @@ public partial class AnimatedVisibility
                 };
 
                 await NotifyAboutStateChange();
-                _shouldRender = true;
                 StateHasChanged();
             });
         });

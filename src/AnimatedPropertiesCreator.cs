@@ -39,20 +39,20 @@ internal class AnimatedPropertiesCreatorImpl(
 		=> new AnimatedProperty(
 			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Length,
-			initialValue,
-			finalValue);
+			initialValue.ToString(),
+			finalValue.ToString());
 	public IAnimatedPropertyPercentage NewPercentageProperty(CssPercentage initialValue, CssPercentage finalValue)
 		=> new AnimatedProperty(
 			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Percentage,
-			initialValue,
-			finalValue);
+			initialValue.ToString(),
+			finalValue.ToString());
 	public IAnimatedPropertyLengthPercentage NewLengthPercentageProperty(CssLengthPercentage initialValue, CssLengthPercentage finalValue)
 		=> new AnimatedProperty(
 			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Percentage,
-			initialValue,
-			finalValue);
+			initialValue.ToString(),
+			finalValue.ToString());
 
 
 	private AnimatedPropertiesProvider? _provider;

@@ -150,11 +150,11 @@ internal class AnimatedProperty
 	IAnimatedPropertyColor IAnimatedPropertyColor.SetIntermediateSteps(IEnumerable<KeyValuePair<CssPercentage, Color>> steps)
 		=> FluentlySetIntermediateSteps<IAnimatedPropertyColor, Color>(steps, value => value.ToHex());
 	IAnimatedPropertyLength IAnimatedPropertyLength.SetIntermediateSteps(IEnumerable<KeyValuePair<CssPercentage, CssLength>> steps)
-		=> FluentlySetIntermediateSteps<IAnimatedPropertyLength, CssLength>(steps, value => value);
+		=> FluentlySetIntermediateSteps<IAnimatedPropertyLength, CssLength>(steps, value => value.ToString());
 	IAnimatedPropertyPercentage IAnimatedPropertyPercentage.SetIntermediateSteps(IEnumerable<KeyValuePair<CssPercentage, CssPercentage>> steps)
-		=> FluentlySetIntermediateSteps<IAnimatedPropertyPercentage, CssPercentage>(steps, value => value);
+		=> FluentlySetIntermediateSteps<IAnimatedPropertyPercentage, CssPercentage>(steps, value => value.ToString());
 	IAnimatedPropertyLengthPercentage IAnimatedPropertyLengthPercentage.SetIntermediateSteps(IEnumerable<KeyValuePair<CssPercentage, CssLengthPercentage>> steps)
-		=> FluentlySetIntermediateSteps<IAnimatedPropertyLengthPercentage, CssLengthPercentage>(steps, value => value);
+		=> FluentlySetIntermediateSteps<IAnimatedPropertyLengthPercentage, CssLengthPercentage>(steps, value => value.ToString());
 	private TThisSpecialized FluentlySetIntermediateSteps<TThisSpecialized, TValue>(IEnumerable<KeyValuePair<CssPercentage, TValue>> steps, Func<TValue, string> valueToString)
 		where TThisSpecialized : class
 		=> DoFluently<TThisSpecialized>(() =>

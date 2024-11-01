@@ -14,7 +14,6 @@ public readonly struct CssPercentage : IComparable<CssPercentage>
 {
 	public static implicit operator CssPercentage(float numericValue) => new($"{numericValue}%");
 	public static implicit operator CssPercentage(string value) => new(value);
-	public static implicit operator string(CssPercentage value) => value.ToString();
 	public override string ToString()
 		=> Assertions.AssertNotNullAndGet(_value, $"{typeof(CssPercentage).Name} does not have a value");
 
