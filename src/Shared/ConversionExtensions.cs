@@ -9,7 +9,7 @@ namespace BlazorCssTransitions.Shared;
 
 internal static class ConversionExtensions
 {
-    public static string ToCssDuration(this TimeSpan duration)
+    public static string ToCssTime(this TimeSpan duration)
     {
         if (duration.TotalSeconds >= 1)
             return $"{Math.Floor(duration.TotalSeconds)}.{duration.Milliseconds / 10}s";

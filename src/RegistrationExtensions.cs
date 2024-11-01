@@ -21,6 +21,8 @@ public static class RegistrationExtensions
 
         collection.AddTransient<AnimatedListInternal.ItemsCollection>();
 
+        collection.AddSingleton<AnimatedPropertiesCreator>();
+
         return collection;
     }
 }

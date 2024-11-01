@@ -12,16 +12,24 @@ public interface EnterTransition : IBaseTransition
 
 
     public static EnterTransition SlideIn(Spec? spec = null, string initialX = "-100%", string initialY = "0")
+        => SlideIn(spec, initialX, initialY);
+    public static EnterTransition SlideIn(Spec? spec, CssLengthPercentage initialX, CssLengthPercentage initialY)
         => new SlideInEnterTransition(
             spec ?? Spec.Linear(),
             initialX,
             initialY);
+
     public static EnterTransition SlideInVertically(Spec? spec = null, string initialY = "100%")
-        => new SlideInEnterTransition(
-            spec ?? Spec.Linear(),
-            "0",
-            initialY);
+        => SlideInVertically(spec, initialY);
+    public static EnterTransition SlideInVertically(Spec? spec, CssLengthPercentage initialY)
+		=> new SlideInEnterTransition(
+			spec ?? Spec.Linear(),
+			"0",
+			initialY);
+
     public static EnterTransition SlideInHorizontally(Spec? spec = null, string initialX = "-100%")
+        => SlideInHorizontally(spec, initialX);
+	public static EnterTransition SlideInHorizontally(Spec? spec, CssLengthPercentage initialX)
         => new SlideInEnterTransition(
             spec ?? Spec.Linear(),
             initialX,

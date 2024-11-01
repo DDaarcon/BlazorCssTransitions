@@ -4,7 +4,7 @@ namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal class SlideOutExitTransition : BaseSpecificExitTransition
 {
-    public SlideOutExitTransition(Spec spec, string finishOffsetX, string finishOffsetY)
+    public SlideOutExitTransition(Spec spec, CssLengthPercentage finishOffsetX, CssLengthPercentage finishOffsetY)
     {
         TransitionAllTimeStyle = $"""
             --finish-slide-out-offset-x: {finishOffsetX};
