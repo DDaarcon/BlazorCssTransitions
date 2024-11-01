@@ -21,4 +21,11 @@ public interface IAnimatedPropertyLengthReady : IAnimatedPropertyLength, IAnimat
 public interface IAnimatedPropertyLengthRegistration : IAnimatedPropertyRegistration
 {
 	Task<CssLength> GetCurrentValue();
+	IAnimatedPropertyLengthFields State { get; }
+}
+
+public interface IAnimatedPropertyLengthFields : IAnimatedPropertyFields
+{
+    CssLength InitialValueLength { get; }
+    CssLength FinalValueLength { get; }
 }

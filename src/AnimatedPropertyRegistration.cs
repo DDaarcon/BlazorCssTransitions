@@ -10,45 +10,46 @@ using System.Threading.Tasks;
 namespace BlazorCssTransitions;
 
 public class AnimatedPropertyRegistration 
-	: IDisposable,
+	: 
 		IAnimatedPropertyColorRegistration, IAnimatedPropertyLengthRegistration,
 		IAnimatedPropertyPercentageRegistration, IAnimatedPropertyLengthPercentageRegistration
 {
-	/// <summary>
-	/// Name of the property
-	/// </summary>
 	public string FullName => _fullName;
-	/// <summary>
-	/// Name of the property wrapped in "var(...)". Ready to be applied to css.
-	/// </summary>
 	public string InvokableName => $"var({_fullName})";
 
-	public void Pause()
+    public void Pause()
 		=> _updateIsRunnning(false);
 
 	public void Resume()
 		=> _updateIsRunnning(true);
 
+    IAnimatedPropertyColorFields IAnimatedPropertyColorRegistration.State => _animatedProperty;
+    IAnimatedPropertyLengthFields IAnimatedPropertyLengthRegistration.State => _animatedProperty;
+    IAnimatedPropertyPercentageFields IAnimatedPropertyPercentageRegistration.State => _animatedProperty;
+    IAnimatedPropertyLengthPercentageFields IAnimatedPropertyLengthPercentageRegistration.State => _animatedProperty;
 
 
-	private readonly Action _unregister;
+    private readonly Action _unregister;
 	private readonly Action<bool> _updateIsRunnning;
 	private readonly string _fullName;
 	private readonly Func<string, Task<(AnimatedPropertiesCreatorImpl.ReadStylePropertyResult, string?)>> _readStyleProperty;
+	private readonly AnimatedProperty _animatedProperty;
 
-	internal AnimatedPropertyRegistration(
-		Action unregister,
-		Action<bool> updateIsRunning,
-		string nameWithoutPrefix,
-		Func<string, Task<(AnimatedPropertiesCreatorImpl.ReadStylePropertyResult, string?)>> readStyleProperty)
-	{
-		_unregister = unregister;
-		_updateIsRunnning = updateIsRunning;
-		_fullName = "--" + nameWithoutPrefix;
-		_readStyleProperty = readStyleProperty;
-	}
+    internal AnimatedPropertyRegistration(
+        Action unregister,
+        Action<bool> updateIsRunning,
+        string nameWithoutPrefix,
+        Func<string, Task<(AnimatedPropertiesCreatorImpl.ReadStylePropertyResult, string?)>> readStyleProperty,
+        AnimatedProperty animatedProperty)
+    {
+        _unregister = unregister;
+        _updateIsRunnning = updateIsRunning;
+        _fullName = "--" + nameWithoutPrefix;
+        _readStyleProperty = readStyleProperty;
+        _animatedProperty = animatedProperty;
+    }
 
-	public void Dispose()
+    public void Dispose()
 	{
 		_unregister();
 	}

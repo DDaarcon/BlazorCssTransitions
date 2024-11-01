@@ -38,12 +38,20 @@ public partial class AnimatedPropertiesProvider : IDisposable
 	internal void AddProperty(AnimatedProperty property)
 	{
 		_properties.Add(property);
+#if DEBUG
+		_additionalPropData.Add(property, new AdditionalPropertyData(
+			InitialValueVarName: property.Name + "-initial",
+			FinalValueVarName: property.Name + "-final"));
+#endif
 		UpdateStylesBlock();
 	}
 
 	internal void RemoveProperty(AnimatedProperty property)
 	{
 		_properties.Remove(property);
+#if DEBUG
+		_additionalPropData.Remove(property);
+#endif
 		UpdateStylesBlock();
 	}
 
@@ -97,6 +105,16 @@ public partial class AnimatedPropertiesProvider : IDisposable
 		}
 	}
 
+
+#if DEBUG
+	private readonly Dictionary<AnimatedProperty, AdditionalPropertyData> _additionalPropData = [];
+
+	private record AdditionalPropertyData(
+		string InitialValueVarName,
+		string FinalValueVarName);
+#endif
+
+
 	private void AppendRootDefinitionsToBuilder(StringBuilder builder)
 	{
 		builder.AppendLine(":root {");
@@ -105,13 +123,17 @@ public partial class AnimatedPropertiesProvider : IDisposable
 		var composedAnimationDefinitions = String.Join(", ", _properties.Select(property => property.GetAnimationValue()));
 		builder.Append(composedAnimationDefinitions);
 		builder.AppendLine(";");
+
+#if DEBUG
+		foreach (var additionalData in _additionalPropData)
+		{
+			builder.AppendLine($"--{additionalData.Value.InitialValueVarName}: {additionalData.Key.InitialValue};");
+			builder.AppendLine($"--{additionalData.Value.FinalValueVarName}: {additionalData.Key.FinalValue};");
+		}
+#endif
+
 		builder.AppendLine("}");
 	}
-
-	private static string IterationCountCss(int iterCount)
-		=> iterCount is AnimatedPropertiesCreator.InfiniteIterationCount
-			? "infinite"
-			: iterCount.ToString();
 
 	private void AppendKeyFramesDefinitionsToBuilder(StringBuilder builder)
 	{
@@ -133,6 +155,20 @@ public partial class AnimatedPropertiesProvider : IDisposable
             }
             else
 			{
+#if DEBUG
+				var additionalData = _additionalPropData[property];
+
+                builder.AppendLine($$"""
+					@keyframes {{property.AnimationName}} {
+						from {
+							--{{property.Name}}: var(--{{additionalData.InitialValueVarName}});
+						}
+						to {
+							--{{property.Name}}: var(--{{additionalData.FinalValueVarName}});
+						}
+					}
+					""");
+#else
 				builder.AppendLine($$"""
 					@keyframes {{property.AnimationName}} {
 						from {
@@ -143,7 +179,8 @@ public partial class AnimatedPropertiesProvider : IDisposable
 						}
 					}
 					""");
-			}
+#endif
+            }
 		}
 	}
 }

@@ -21,4 +21,11 @@ public interface IAnimatedPropertyColorReady : IAnimatedPropertyColor, IAnimated
 public interface IAnimatedPropertyColorRegistration : IAnimatedPropertyRegistration
 {
 	Task<Color?> GetCurrentValue();
+	IAnimatedPropertyColorFields State { get; }
+}
+
+public interface IAnimatedPropertyColorFields : IAnimatedPropertyFields
+{
+    Color InitialValueColor { get; }
+    Color FinalValueColor { get; }
 }

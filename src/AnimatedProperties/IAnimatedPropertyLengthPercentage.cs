@@ -16,4 +16,11 @@ public interface IAnimatedPropertyLengthPercentageReady : IAnimatedPropertyLengt
 public interface IAnimatedPropertyLengthPercentageRegistration : IAnimatedPropertyRegistration
 {
 	Task<CssLengthPercentage> GetCurrentValue();
+    IAnimatedPropertyLengthPercentageFields State { get; }
+}
+
+public interface IAnimatedPropertyLengthPercentageFields : IAnimatedPropertyFields
+{
+    CssLengthPercentage InitialValueLengthPercentage { get; }
+    CssLengthPercentage FinalValueLengthPercentage { get; }
 }

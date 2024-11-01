@@ -10,10 +10,10 @@ using ILengthPercentageSettings = IAnimatedPropertySettings<IAnimatedPropertyLen
 
 
 internal class AnimatedProperty 
-	: IAnimatedPropertyColor, IAnimatedPropertyColorReady,
-		IAnimatedPropertyLength, IAnimatedPropertyLengthReady,
-		IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady,
-		IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady
+	: IAnimatedPropertyColor, IAnimatedPropertyColorReady, IAnimatedPropertyColorFields,
+		IAnimatedPropertyLength, IAnimatedPropertyLengthReady, IAnimatedPropertyLengthFields,
+		IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady, IAnimatedPropertyPercentageFields,
+		IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady, IAnimatedPropertyLengthPercentageFields
 {
 	private readonly AnimatedPropertiesCreatorImpl _creator;
 	private readonly Func<string, Task<(AnimatedPropertiesCreatorImpl.ReadStylePropertyResult, string?)>> _readStyleProperty;
@@ -52,15 +52,40 @@ internal class AnimatedProperty
 	private bool _isRunning = true;
 
 
-	internal string Name => _name;
+	public string Name => _name;
 	internal string AnimationName => _name + "-anim";
-	internal PropertySyntax Syntax => _syntax;
-	internal string InitialValue => _initialValue;
-	internal string FinalValue => _finalValue;
-	internal IEnumerable<KeyValuePair<CssPercentage, string>>? IntermediateStates => _intermediateStates;
+	public PropertySyntax Syntax => _syntax;
+	public string InitialValue => _initialValue;
+	public string FinalValue => _finalValue;
+	public IEnumerable<KeyValuePair<CssPercentage, string>>? IntermediateStates => _intermediateStates;
 	private Spec Spec => _spec ?? throw new ArgumentNullException("Specification (spec) must be provided to construct an animated property");
+    Spec? IAnimatedPropertyFields.Spec => _spec;
+    public int IterationCount => _iterationCount;
+    public AnimationDirection Direction => _direction;
+    public AnimationFillMode FillMode => _fillMode;
+	public bool IsRunning => _isRunning;
 
-	internal string GetAnimationValue()
+
+    public Color InitialValueColor => _syntax is PropertySyntax.Color
+		? ColorTranslator.FromHtml(InitialValue) : new Color();
+    public Color FinalValueColor => _syntax is PropertySyntax.Color
+        ? ColorTranslator.FromHtml(FinalValue) : new Color();
+    public CssLength InitialValueLength => _syntax is PropertySyntax.Length
+        ? InitialValue : CssLength.Unassigned();
+    public CssLength FinalValueLength => _syntax is PropertySyntax.Length
+        ? FinalValue : CssLength.Unassigned();
+    public CssPercentage InitialValuePercentage => _syntax is PropertySyntax.Percentage
+        ? InitialValue : CssPercentage.Unassigned();
+    public CssPercentage FinalValuePercentage => _syntax is PropertySyntax.Percentage
+        ? FinalValue : CssPercentage.Unassigned();
+    public CssLengthPercentage InitialValueLengthPercentage => _syntax is PropertySyntax.LengthPercentage
+        ? InitialValue : CssLengthPercentage.Unassigned();
+    public CssLengthPercentage FinalValueLengthPercentage => _syntax is PropertySyntax.LengthPercentage
+        ? FinalValue : CssLengthPercentage.Unassigned();
+
+
+
+    internal string GetAnimationValue()
 		=> $"{Spec.GetAnimationValue()} {IterationCountCss(_iterationCount)} {_direction.ToCss()} {_fillMode.ToCss()} running {AnimationName}";
 
 
@@ -192,7 +217,8 @@ internal class AnimatedProperty
 				_creator.RefreshProperties();
 			},
 			nameWithoutPrefix: _name,
-			_readStyleProperty);
+			_readStyleProperty,
+			this);
 
 		return marker;
 	}
@@ -200,7 +226,7 @@ internal class AnimatedProperty
 
 	private static void AssertPercentageBetween0and100Exclusive(CssPercentage percentage)
 	{
-		var percentAsNum = percentage.ToNumeric();
+		var percentAsNum = percentage.AsNumeric;
 
 		if (percentAsNum > 0
 			&& percentAsNum < 100)

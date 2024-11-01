@@ -8,9 +8,15 @@ namespace BlazorCssTransitions.AnimatedProperties;
 
 public interface IAnimatedPropertyRegistration : IDisposable
 {
-	string FullName { get; }
-	string InvokableName { get; }
+    /// <summary>
+    /// Name of the property. The name is generated out of GUID, so should be unique.
+    /// </summary>
+    string FullName { get; }
+    /// <summary>
+    /// Name of the property wrapped in "var(...)". Ready to be applied to css.
+    /// </summary>
+    string InvokableName { get; }
 
-	void Pause();
+    void Pause();
 	void Resume();
 }

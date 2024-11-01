@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions.AnimatedProperties;
 
-public interface IAnimatedPropertySettings<TThis, TReadyThis, TRegistration>
+public interface IAnimatedPropertySettings<TThis, TReadyThis, TRegistration> : IAnimatedPropertyFields
 	where TReadyThis : IAnimatedPropertyReadyToRegister<TRegistration>
 {
 	TReadyThis WithSpec(Spec spec);
@@ -19,4 +19,18 @@ public interface IAnimatedPropertySettings<TThis, TReadyThis, TRegistration>
 		int iterCount = AnimatedProperty.DefaultIterationCount,
 		AnimationDirection direction = AnimatedProperty.DefaultDirection,
 		AnimationFillMode fillMode = AnimatedProperty.DefaultFillMode);
+}
+
+public interface IAnimatedPropertyFields
+{
+    string Name { get; }
+    PropertySyntax Syntax { get; }
+    string InitialValue { get; }
+    string FinalValue { get; }
+    Spec? Spec { get; }
+    int IterationCount { get; }
+    AnimationDirection Direction { get; }
+    AnimationFillMode FillMode { get; }
+	IEnumerable<KeyValuePair<CssPercentage, string>>? IntermediateStates { get; }
+	bool IsRunning { get; }
 }

@@ -14,4 +14,11 @@ public interface IAnimatedPropertyPercentageReady : IAnimatedPropertyPercentage,
 public interface IAnimatedPropertyPercentageRegistration : IAnimatedPropertyRegistration
 {
 	Task<CssPercentage> GetCurrentValue();
+    IAnimatedPropertyPercentageFields State { get; }
+}
+
+public interface IAnimatedPropertyPercentageFields : IAnimatedPropertyFields
+{
+    CssPercentage InitialValuePercentage { get; }
+    CssPercentage FinalValuePercentage { get; }
 }

@@ -12,6 +12,9 @@ namespace BlazorCssTransitions;
 
 public interface AnimatedPropertiesCreator
 {
+	/// <summary>
+	/// Intializes creation of color css property. 
+	/// </summary>
 	IAnimatedPropertyColor NewColorProperty(Color initialColor, Color finalColor);
 	IAnimatedPropertyLengthPercentage NewLengthPercentageProperty(CssLengthPercentage initialValue, CssLengthPercentage finalValue);
 	IAnimatedPropertyLength NewLengthProperty(CssLength initialValue, CssLength finalValue);
