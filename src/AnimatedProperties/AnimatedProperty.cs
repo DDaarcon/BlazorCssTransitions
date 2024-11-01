@@ -57,6 +57,7 @@ internal class AnimatedProperty
 	internal PropertySyntax Syntax => _syntax;
 	internal string InitialValue => _initialValue;
 	internal string FinalValue => _finalValue;
+	internal IEnumerable<KeyValuePair<CssPercentage, string>>? IntermediateStates => _intermediateStates;
 	private Spec Spec => _spec ?? throw new ArgumentNullException("Specification (spec) must be provided to construct an animated property");
 
 	internal string GetAnimationValue()

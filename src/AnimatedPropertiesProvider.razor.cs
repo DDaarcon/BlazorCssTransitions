@@ -105,7 +105,6 @@ public partial class AnimatedPropertiesProvider : IDisposable
 		var composedAnimationDefinitions = String.Join(", ", _properties.Select(property => property.GetAnimationValue()));
 		builder.Append(composedAnimationDefinitions);
 		builder.AppendLine(";");
-
 		builder.AppendLine("}");
 	}
 
@@ -118,16 +117,33 @@ public partial class AnimatedPropertiesProvider : IDisposable
 	{
 		foreach (var property in _properties)
 		{
-			builder.AppendLine($$"""
-				@keyframes {{property.AnimationName}} {
-					from {
-						--{{property.Name}}: {{property.InitialValue}};
-					}
-					to {
-						--{{property.Name}}: {{property.FinalValue}};
-					}
+			if (property.IntermediateStates?.Any() ?? false)
+			{
+				builder.AppendLine($"@keyframes {property.AnimationName} {{");
+				builder.AppendLine($"0% {{ --{property.Name}: {property.InitialValue}; }}");
+
+				foreach (var intermediateState in property.IntermediateStates.OrderBy(x => x.Key))
+				{
+					builder.AppendLine($"{intermediateState.Key} {{ --{property.Name}: {intermediateState.Value}; }}");
 				}
-				""");
+
+                builder.AppendLine($"100% {{ --{property.Name}: {property.FinalValue}; }}");
+				builder.AppendLine("}");
+
+            }
+            else
+			{
+				builder.AppendLine($$"""
+					@keyframes {{property.AnimationName}} {
+						from {
+							--{{property.Name}}: {{property.InitialValue}};
+						}
+						to {
+							--{{property.Name}}: {{property.FinalValue}};
+						}
+					}
+					""");
+			}
 		}
 	}
 }
