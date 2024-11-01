@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions.AnimatedProperties;
 
-public interface IAnimatedPropertyReadyToRegister
+public interface IAnimatedPropertyReadyToRegister<TRegistration>
 {
-	AnimatedPropertyRegistration Create();
+	/// <summary>
+	/// Registers property in provider (renders it on the page).
+	/// </summary>
+	/// <returns>
+	/// A disposable property registration.
+	/// </returns>
+	TRegistration Create();
 }

@@ -1,5 +1,6 @@
 ﻿using BlazorCssTransitions.AnimatedProperties;
 using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.CssPropertyReading;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,9 @@ namespace BlazorCssTransitions;
 public partial class AnimatedPropertiesProvider : IDisposable
 {
 	[Inject]
-	private AnimatedPropertiesCreator _creator { get; init; } = default!;
+	private AnimatedPropertiesCreatorImpl _creator { get; init; } = default!;
+	[Inject]
+	private JsCssPropertyReader _cssPropertyReader { get; init; } = default!;
 
 	private readonly List<AnimatedProperty> _properties = [];
 
@@ -27,6 +30,9 @@ public partial class AnimatedPropertiesProvider : IDisposable
 	{
 		_registrationMarker?.Dispose();
 	}
+
+	internal async Task<string?> ReadRootStyleProperty(string propertyName)
+		=> await _cssPropertyReader.ReadRootProperty(propertyName);
 
 
 	internal void AddProperty(AnimatedProperty property)

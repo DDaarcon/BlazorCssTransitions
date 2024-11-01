@@ -30,4 +30,5 @@ public readonly struct CssLengthPercentage
 		_value = value;
 	}
 
+	public static CssLengthPercentage Unassigned() => new();
 }

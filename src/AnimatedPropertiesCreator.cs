@@ -1,5 +1,6 @@
 ﻿using BlazorCssTransitions.AnimatedProperties;
 using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.CssPropertyReading;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,34 +10,46 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions;
 
-public class AnimatedPropertiesCreator
+public interface AnimatedPropertiesCreator
 {
+	IAnimatedPropertyColor NewColorProperty(Color initialColor, Color finalColor);
+	IAnimatedPropertyLengthPercentage NewLengthPercentageProperty(CssLengthPercentage initialValue, CssLengthPercentage finalValue);
+	IAnimatedPropertyLength NewLengthProperty(CssLength initialValue, CssLength finalValue);
+	IAnimatedPropertyPercentage NewPercentageProperty(CssPercentage initialValue, CssPercentage finalValue);
+
+
+	public const int InfiniteIterationCount = -1;
+}
+
+internal class AnimatedPropertiesCreatorImpl(
+	JsCssPropertyReader cssPropertyReader) : AnimatedPropertiesCreator
+{
+	private readonly JsCssPropertyReader _cssPropertyReader = cssPropertyReader;
+
 	public IAnimatedPropertyColor NewColorProperty(Color initialColor, Color finalColor)
 		=> new AnimatedProperty(
-			this,
+			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Color,
 			initialValue: initialColor.ToHex(),
 			finalValue: finalColor.ToHex());
 	public IAnimatedPropertyLength NewLengthProperty(CssLength initialValue, CssLength finalValue)
 		=> new AnimatedProperty(
-			this,
+			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Length,
 			initialValue,
 			finalValue);
 	public IAnimatedPropertyPercentage NewPercentageProperty(CssPercentage initialValue, CssPercentage finalValue)
 		=> new AnimatedProperty(
-			this,
+			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Percentage,
 			initialValue,
 			finalValue);
 	public IAnimatedPropertyLengthPercentage NewLengthPercentageProperty(CssLengthPercentage initialValue, CssLengthPercentage finalValue)
 		=> new AnimatedProperty(
-			this,
+			this, ReadRootStyleProperty,
 			syntax: PropertySyntax.Percentage,
 			initialValue,
 			finalValue);
-
-	public const int InfiniteIterationCount = -1;
 
 
 	private AnimatedPropertiesProvider? _provider;
@@ -73,5 +86,22 @@ public class AnimatedPropertiesCreator
 	internal void RefreshProperties()
 	{
 		_provider?.Refresh();
+	}
+
+	internal async Task<(ReadStylePropertyResult result, string? value)> ReadRootStyleProperty(string propertyName)
+	{
+		if (_provider is null)
+			return (ReadStylePropertyResult.NotYetInitialized, null);
+
+		return (
+			ReadStylePropertyResult.Success,
+			await _provider.ReadRootStyleProperty(propertyName)
+		);
+	}
+
+	internal enum ReadStylePropertyResult
+	{
+		Success,
+		NotYetInitialized
 	}
 }

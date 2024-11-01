@@ -1,14 +1,13 @@
 ﻿using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Specifications;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BlazorCssTransitions.AnimatedProperties;
+using IColorSettings = IAnimatedPropertySettings<IAnimatedPropertyColor, IAnimatedPropertyColorReady, IAnimatedPropertyColorRegistration>;
+using ILengthSettings = IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady, IAnimatedPropertyLengthRegistration>;
+using IPercentageSettings = IAnimatedPropertySettings<IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady, IAnimatedPropertyPercentageRegistration>;
+using ILengthPercentageSettings = IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady, IAnimatedPropertyLengthPercentageRegistration>;
+
 
 internal class AnimatedProperty 
 	: IAnimatedPropertyColor, IAnimatedPropertyColorReady,
@@ -16,7 +15,22 @@ internal class AnimatedProperty
 		IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady,
 		IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady
 {
-	private readonly AnimatedPropertiesCreator _creator;
+	private readonly AnimatedPropertiesCreatorImpl _creator;
+	private readonly Func<string, Task<(AnimatedPropertiesCreatorImpl.ReadStylePropertyResult, string?)>> _readStyleProperty;
+
+	internal AnimatedProperty(
+		AnimatedPropertiesCreatorImpl creator,
+		Func<string, Task<(AnimatedPropertiesCreatorImpl.ReadStylePropertyResult, string?)>> readStyleProperty,
+		PropertySyntax syntax,
+		string initialValue,
+		string finalValue)
+	{
+		_creator = creator;
+		_syntax = syntax;
+		_initialValue = initialValue;
+		_finalValue = finalValue;
+		_readStyleProperty = readStyleProperty;
+	}
 
 	private readonly string _name = "a" + Guid.NewGuid().ToString();
 
@@ -55,65 +69,52 @@ internal class AnimatedProperty
 			: iterCount.ToString();
 
 
-	public AnimatedProperty(
-		AnimatedPropertiesCreator creator,
-		PropertySyntax syntax,
-		string initialValue,
-		string finalValue)
-	{
-		_creator = creator;
-		_syntax = syntax;
-		_initialValue = initialValue;
-		_finalValue = finalValue;
-	}
-
-
-	IAnimatedPropertyColorReady IAnimatedPropertySettings<IAnimatedPropertyColor, IAnimatedPropertyColorReady>.WithSpec(Spec spec)
+	IAnimatedPropertyColorReady IColorSettings.WithSpec(Spec spec)
 		=> FluentlySetSpec<IAnimatedPropertyColorReady>(spec);
-	IAnimatedPropertyLengthReady IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady>.WithSpec(Spec spec)
+	IAnimatedPropertyLengthReady ILengthSettings.WithSpec(Spec spec)
 		=> FluentlySetSpec<IAnimatedPropertyLengthReady>(spec);
-	IAnimatedPropertyPercentageReady IAnimatedPropertySettings<IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady>.WithSpec(Spec spec)
+	IAnimatedPropertyPercentageReady IPercentageSettings.WithSpec(Spec spec)
 		=> FluentlySetSpec<IAnimatedPropertyPercentageReady>(spec);
-	IAnimatedPropertyLengthPercentageReady IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady>.WithSpec(Spec spec)
+	IAnimatedPropertyLengthPercentageReady ILengthPercentageSettings.WithSpec(Spec spec)
 		=> FluentlySetSpec<IAnimatedPropertyLengthPercentageReady>(spec);
 	private TThisSpecialized FluentlySetSpec<TThisSpecialized>(Spec spec)
 		where TThisSpecialized : class
 		=> DoFluently<TThisSpecialized>(() => _spec = spec);
 
 
-	IAnimatedPropertyColor IAnimatedPropertySettings<IAnimatedPropertyColor, IAnimatedPropertyColorReady>.WithIterationCount(int count)
+	IAnimatedPropertyColor IColorSettings.WithIterationCount(int count)
 		=> FluentlySetIterationCount<IAnimatedPropertyColor>(count);
-	IAnimatedPropertyLength IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady>.WithIterationCount(int count)
+	IAnimatedPropertyLength ILengthSettings.WithIterationCount(int count)
 		=> FluentlySetIterationCount<IAnimatedPropertyLength>(count);
-	IAnimatedPropertyPercentage IAnimatedPropertySettings<IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady>.WithIterationCount(int count)
+	IAnimatedPropertyPercentage IPercentageSettings.WithIterationCount(int count)
 		=> FluentlySetIterationCount<IAnimatedPropertyPercentage>(count);
-	IAnimatedPropertyLengthPercentage IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady>.WithIterationCount(int count)
+	IAnimatedPropertyLengthPercentage ILengthPercentageSettings.WithIterationCount(int count)
 		=> FluentlySetIterationCount<IAnimatedPropertyLengthPercentage>(count);
 	private TThisSpecialized FluentlySetIterationCount<TThisSpecialized>(int count)
 		where TThisSpecialized : class
 		=> DoFluently<TThisSpecialized>(() => _iterationCount = count);
 
 
-	IAnimatedPropertyColor IAnimatedPropertySettings<IAnimatedPropertyColor, IAnimatedPropertyColorReady>.WithDirection(AnimationDirection direction)
+	IAnimatedPropertyColor IColorSettings.WithDirection(AnimationDirection direction)
 		=> FluentlySetDirection<IAnimatedPropertyColor>(direction);
-	IAnimatedPropertyLength IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady>.WithDirection(AnimationDirection direction)
+	IAnimatedPropertyLength ILengthSettings.WithDirection(AnimationDirection direction)
 		=> FluentlySetDirection<IAnimatedPropertyLength>(direction);
-	IAnimatedPropertyPercentage IAnimatedPropertySettings<IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady>.WithDirection(AnimationDirection direction)
+	IAnimatedPropertyPercentage IPercentageSettings.WithDirection(AnimationDirection direction)
 		=> FluentlySetDirection<IAnimatedPropertyPercentage>(direction);
-	IAnimatedPropertyLengthPercentage IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady>.WithDirection(AnimationDirection direction)
+	IAnimatedPropertyLengthPercentage ILengthPercentageSettings.WithDirection(AnimationDirection direction)
 		=> FluentlySetDirection<IAnimatedPropertyLengthPercentage>(direction);
 	private TThisSpecialized FluentlySetDirection<TThisSpecialized>(AnimationDirection direction)
 		where TThisSpecialized : class
 		=> DoFluently<TThisSpecialized>(() => _direction = direction);
 
 
-	IAnimatedPropertyColor IAnimatedPropertySettings<IAnimatedPropertyColor, IAnimatedPropertyColorReady>.WithFillMode(AnimationFillMode fillMode)
+	IAnimatedPropertyColor IColorSettings.WithFillMode(AnimationFillMode fillMode)
 		=> FluentlySetFillMode<IAnimatedPropertyColor>(fillMode);
-	IAnimatedPropertyLength IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady>.WithFillMode(AnimationFillMode fillMode)
+	IAnimatedPropertyLength ILengthSettings.WithFillMode(AnimationFillMode fillMode)
 		=> FluentlySetFillMode<IAnimatedPropertyLength>(fillMode);
-	IAnimatedPropertyPercentage IAnimatedPropertySettings<IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady>.WithFillMode(AnimationFillMode fillMode)
+	IAnimatedPropertyPercentage IPercentageSettings.WithFillMode(AnimationFillMode fillMode)
 		=> FluentlySetFillMode<IAnimatedPropertyPercentage>(fillMode);
-	IAnimatedPropertyLengthPercentage IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady>.WithFillMode(AnimationFillMode fillMode)
+	IAnimatedPropertyLengthPercentage ILengthPercentageSettings.WithFillMode(AnimationFillMode fillMode)
 		=> FluentlySetFillMode<IAnimatedPropertyLengthPercentage>(fillMode);
 	private TThisSpecialized FluentlySetFillMode<TThisSpecialized>(AnimationFillMode fillMode)
 		where TThisSpecialized : class
@@ -140,13 +141,13 @@ internal class AnimatedProperty
 		});
 
 
-	IAnimatedPropertyColorReady IAnimatedPropertySettings<IAnimatedPropertyColor, IAnimatedPropertyColorReady>.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
+	IAnimatedPropertyColorReady IColorSettings.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
 		=> FluentlySetAll<IAnimatedPropertyColorReady>(spec, iterCount, direction, fillMode);
-	IAnimatedPropertyLengthReady IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady>.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
+	IAnimatedPropertyLengthReady ILengthSettings.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
 		=> FluentlySetAll<IAnimatedPropertyLengthReady>(spec, iterCount, direction, fillMode);
-	IAnimatedPropertyPercentageReady IAnimatedPropertySettings<IAnimatedPropertyPercentage, IAnimatedPropertyPercentageReady>.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
+	IAnimatedPropertyPercentageReady IPercentageSettings.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
 		=> FluentlySetAll<IAnimatedPropertyPercentageReady>(spec, iterCount, direction, fillMode);
-	IAnimatedPropertyLengthPercentageReady IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady>.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
+	IAnimatedPropertyLengthPercentageReady ILengthPercentageSettings.With(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
 		=> FluentlySetAll<IAnimatedPropertyLengthPercentageReady>(spec, iterCount, direction, fillMode);
 	private TThisSpecialized FluentlySetAll<TThisSpecialized>(Spec spec, int iterCount, AnimationDirection direction, AnimationFillMode fillMode)
 		where TThisSpecialized : class
@@ -168,13 +169,17 @@ internal class AnimatedProperty
 	}
 
 
-	/// <summary>
-	/// Registers property in provider (renders it on the page).
-	/// </summary>
-	/// <returns>
-	/// A disposable property registration.
-	/// </returns>
-	public AnimatedPropertyRegistration Create()
+
+	IAnimatedPropertyColorRegistration IAnimatedPropertyReadyToRegister<IAnimatedPropertyColorRegistration>.Create()
+		=> Create();
+	IAnimatedPropertyLengthRegistration IAnimatedPropertyReadyToRegister<IAnimatedPropertyLengthRegistration>.Create()
+		=> Create();
+	IAnimatedPropertyPercentageRegistration IAnimatedPropertyReadyToRegister<IAnimatedPropertyPercentageRegistration>.Create()
+		=> Create();
+	IAnimatedPropertyLengthPercentageRegistration IAnimatedPropertyReadyToRegister<IAnimatedPropertyLengthPercentageRegistration>.Create()
+		=> Create();
+
+	private AnimatedPropertyRegistration Create()
 	{
 		_creator.RegisterProperty(this);
 
@@ -185,7 +190,8 @@ internal class AnimatedProperty
 				_isRunning = isRunning;
 				_creator.RefreshProperties();
 			},
-			nameWithoutPrefix: _name);
+			nameWithoutPrefix: _name,
+			_readStyleProperty);
 
 		return marker;
 	}
@@ -227,6 +233,7 @@ internal class AnimatedProperty
 	private AnimatedProperty Duplicate()
 		=> new(
 			_creator,
+			_readStyleProperty,
 			_syntax,
 			_initialValue,
 			_finalValue)
@@ -238,4 +245,6 @@ internal class AnimatedProperty
 			_intermediateStates = _intermediateStates,
 			_isRunning = _isRunning
 		};
+
+	
 }

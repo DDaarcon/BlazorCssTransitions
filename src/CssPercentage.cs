@@ -32,6 +32,7 @@ public readonly struct CssPercentage
 		_isWithSign = validationResult.ContainsSign;
 	}
 
+	public static CssPercentage Unassigned() => new();
 
 	internal float ToNumeric()
 		=> _isWithSign

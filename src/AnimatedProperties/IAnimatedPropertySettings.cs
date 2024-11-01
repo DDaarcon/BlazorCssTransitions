@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace BlazorCssTransitions.AnimatedProperties;
 
-public interface IAnimatedPropertySettings<TThis, TReadyThis>
-	where TReadyThis : IAnimatedPropertyReadyToRegister
+public interface IAnimatedPropertySettings<TThis, TReadyThis, TRegistration>
+	where TReadyThis : IAnimatedPropertyReadyToRegister<TRegistration>
 {
 	TReadyThis WithSpec(Spec spec);
 	TThis WithIterationCount(int count);

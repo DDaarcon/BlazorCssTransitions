@@ -16,7 +16,7 @@ public interface ExitTransition : IBaseTransition
             finishOpacity);
 
     public static ExitTransition SlideOut(Spec? spec = null, string finishX = "-100%", string finishY = "0")
-        => SlideOut(spec, finishX, finishY);
+        => SlideOut(spec, new CssLengthPercentage(finishX), new CssLengthPercentage(finishY));
     public static ExitTransition SlideOut(Spec? spec, CssLengthPercentage finishX, CssLengthPercentage finishY)
         => new SlideOutExitTransition(
             spec ?? Spec.Linear(),
@@ -24,7 +24,7 @@ public interface ExitTransition : IBaseTransition
             finishY);
 
     public static ExitTransition SlideOutVertically(Spec? spec = null, string finishY = "100%")
-        => SlideOutVertically(spec, finishY);
+        => SlideOutVertically(spec, new CssLengthPercentage(finishY));
     public static ExitTransition SlideOutVertically(Spec? spec, CssLengthPercentage finishY)
         => new SlideOutExitTransition(
             spec ?? Spec.Linear(),
@@ -32,7 +32,7 @@ public interface ExitTransition : IBaseTransition
             finishY);
 
     public static ExitTransition SlideOutHorizontally(Spec? spec = null, string finishX = "-100%")
-        => SlideOutHorizontally(spec, finishX);
+        => SlideOutHorizontally(spec, new CssLengthPercentage(finishX));
     public static ExitTransition SlideOutHorizontally(Spec? spec, CssLengthPercentage finishX)
         => new SlideOutExitTransition(
             spec ?? Spec.Linear(),

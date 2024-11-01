@@ -167,7 +167,8 @@ public partial class AnimatedVisibility
                         OnHidden.InvokeAsync();
                         break;
                     default:
-                        throw new Exception($"State {_currentState} is not intermediate");
+                        // let's say that element having state different that intermediate is not a critical error, just do not perform eny update
+                        return;
                 }
                 _shouldRender = true;
 

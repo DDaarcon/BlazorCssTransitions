@@ -26,4 +26,6 @@ public readonly struct CssLength
 
 		_value = value;
 	}
+
+	public static CssLength Unassigned() => new();
 }

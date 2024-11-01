@@ -1,4 +1,5 @@
 ﻿using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.CssPropertyReading;
 using BlazorCssTransitions.Shared.JsInterop;
 using BlazorCssTransitions.Shared.SizeMeasurement;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,12 +17,14 @@ public static class RegistrationExtensions
     {
         collection.AddScoped<JsSizeMeter>();
         collection.AddScoped<JsSizeObserver>();
+        collection.AddScoped<JsCssPropertyReader>();
 
         collection.AddScoped<ExternalRenderer>();
 
         collection.AddTransient<AnimatedListInternal.ItemsCollection>();
 
-        collection.AddSingleton<AnimatedPropertiesCreator>();
+        collection.AddSingleton<AnimatedPropertiesCreatorImpl>();
+        collection.AddSingleton<AnimatedPropertiesCreator>(services => services.GetRequiredService<AnimatedPropertiesCreatorImpl>());
 
         return collection;
     }
