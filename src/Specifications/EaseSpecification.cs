@@ -1,6 +1,6 @@
 ﻿using BlazorCssTransitions.Shared;
 
-namespace BlazorCssTransitions.Specifications;
+namespace BlazorCssTransitions;
 
 public partial class Spec
 {

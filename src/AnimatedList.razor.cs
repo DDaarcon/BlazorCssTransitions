@@ -1,18 +1,5 @@
 ﻿using BlazorCssTransitions.AnimatedListInternal;
-using BlazorCssTransitions.AnimatedVisibilityTransitions;
-using BlazorCssTransitions.Shared;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BlazorCssTransitions;
 

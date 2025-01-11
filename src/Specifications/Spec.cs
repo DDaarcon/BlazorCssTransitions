@@ -5,9 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlazorCssTransitions.Specifications;
+namespace BlazorCssTransitions;
 
-// TODO remove unused properties
 public partial class Spec
 {
     protected Spec() { }

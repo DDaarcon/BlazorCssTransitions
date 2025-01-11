@@ -1,7 +1,4 @@
-﻿using BlazorCssTransitions.Shared;
-using BlazorCssTransitions.Specifications;
-
-namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
+﻿namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal abstract class BaseSpecificEnterTransition : BaseSpecificTransition<EnterTransition>, EnterTransition
 {

@@ -1,13 +1,10 @@
-﻿using BlazorCssTransitions.Specifications;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
 
-namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
+namespace BlazorCssTransitions;
 
+#pragma warning disable IDE1006 // Naming Styles
 public interface ExitTransition : IBaseTransition
+#pragma warning restore IDE1006 // Naming Styles
 {
     public static ExitTransition FadeOut(Spec? spec = null, float initialOpacity = 1f, float finishOpacity = 0f)
         => new FadeOutExitTransition(

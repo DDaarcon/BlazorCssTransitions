@@ -1,6 +1,4 @@
-﻿using BlazorCssTransitions.Specifications;
-
-namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
+﻿namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
 
 internal class SlideOutExitTransition : BaseSpecificExitTransition
 {

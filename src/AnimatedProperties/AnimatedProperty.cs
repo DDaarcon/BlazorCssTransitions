@@ -1,5 +1,4 @@
 ﻿using BlazorCssTransitions.Shared;
-using BlazorCssTransitions.Specifications;
 using System.Drawing;
 
 namespace BlazorCssTransitions.AnimatedProperties;

@@ -1,8 +1,10 @@
-﻿using BlazorCssTransitions.Specifications;
+﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
 
-namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
+namespace BlazorCssTransitions;
 
+#pragma warning disable IDE1006 // Naming Styles
 public interface EnterTransition : IBaseTransition
+#pragma warning restore IDE1006 // Naming Styles
 {
     public static EnterTransition FadeIn(Spec? spec = null, float initialOpacity = 0f, float finishOpacity = 1f)
         => new FadeInEnterTransition(
