@@ -15,6 +15,10 @@ public partial class Spec
 
     public static Spec Linear(double? durationMs, double? delayMs = null)
         => new LinearSpecification(TimeSpan.FromMilliseconds(durationMs ?? 200), TimeSpan.FromMilliseconds(delayMs ?? 0));
+
+	public readonly static Spec Linear100ms = Linear(TimeSpan.FromMilliseconds(100), delay: null);
+	public readonly static Spec Linear200ms = Linear(TimeSpan.FromMilliseconds(200), delay: null);
+	public readonly static Spec Linear500ms = Linear(TimeSpan.FromMilliseconds(500), delay: null);
 }
 
 internal class LinearSpecification : Spec
