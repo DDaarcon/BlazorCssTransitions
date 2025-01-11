@@ -12,13 +12,13 @@ public partial class Spec
 {
     protected Spec() { }
 
-    protected TimeSpan? _duration;
-    protected TimeSpan? _delay;
-    protected string? _timingFunction;
+    protected TimeSpan? _duration { get; init; }
+    protected TimeSpan? _delay { get; init; }
+    protected string? _timingFunction { get; init; }
 
-    internal TimeSpan Duration => Assertions.AssertNotNullAndGet(ref _duration, "Transition's duration must be set before transition is used.");
-    internal TimeSpan Delay => Assertions.AssertNotNullAndGet(ref _delay, "Transition's delay must be set before transition is used.");
-    internal string TimingFunction => Assertions.AssertNotNullAndGet(ref _timingFunction, "Transition's timing function must be set before transition is used.");
+    internal TimeSpan Duration => Assertions.AssertNotNullAndGet(_duration, "Transition's duration must be set before transition is used.");
+    internal TimeSpan Delay => Assertions.AssertNotNullAndGet(_delay, "Transition's delay must be set before transition is used.");
+    internal string TimingFunction => Assertions.AssertNotNullAndGet(_timingFunction, "Transition's timing function must be set before transition is used.");
 
     /// <summary>
     /// Returns: [animated-prop] [duration] [delay] [riming-func]

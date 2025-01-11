@@ -19,14 +19,14 @@ internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
     private string? _transitionedProperty;
     internal string TransitionedProperty
     {
-        get => Assertions.AssertNotNullAndGet(ref _transitionedProperty, "Transitioned property must be set before transition is used.");
+        get => Assertions.AssertNotNullAndGet(_transitionedProperty, "Transitioned property must be set before transition is used.");
         private protected set => _transitionedProperty = value;
     }
 
     private Spec? _specification;
     internal Spec Specification
     {
-        get => Assertions.AssertNotNullAndGet(ref _specification, "Animation specification must be set before transition is used.");
+        get => Assertions.AssertNotNullAndGet(_specification, "Animation specification must be set before transition is used.");
         private protected set => _specification = value;
     }
 
