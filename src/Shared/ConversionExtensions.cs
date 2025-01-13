@@ -22,4 +22,9 @@ internal static class ConversionExtensions
 
     public static string ToCss(this double value)
         => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+
+
+    public static int ToInt(this bool value)
+        => value ? 1 : 0;
 }

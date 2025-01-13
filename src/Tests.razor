@@ -1,4 +1,5 @@
-﻿
+﻿@using BlazorCssTransitions.Shared
+
 @* TEMPORARY COMPONENT FOR TESTING *@
 
 @* <AnimatedVisibility Visible="@_animTestVisible"
@@ -30,7 +31,7 @@
         }
     </AnimatedList> *@
 
-    <button @onclick="@(() => { State = State == "bbb" ? "ccc" : "bbb"; })">
+    @* <button @onclick="@(() => { State = State == "bbb" ? "ccc" : "bbb"; })">
         Switch content
     </button>
 
@@ -50,7 +51,14 @@
                 ccc
             </div>
         }
-    </AnimatedContent>
+    </AnimatedContent> *@
+
+    <AnimatedVisibility Visible="@show"
+                        Enter="@showEnter"
+                        Exit="@showExit"
+    >
+        <div style="background-color:red; width: 100px; height: 100px;"></div>
+    </AnimatedVisibility>
 
 @code {
 
@@ -69,12 +77,28 @@
 
     private int _size { get; set; } = 100;
 
+    private bool show { get; set; } = true;
+
+    private readonly static EnterTransition showEnter = EnterTransition.SlideInVertically(Spec.Linear(TimeSpan.FromSeconds(10)));
+    private readonly static ExitTransition showExit = ExitTransition.SlideOutVertically(Spec.Linear(TimeSpan.FromSeconds(10)));
+
     private System.Timers.Timer? _timer;
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-
+            StartTimer(TimeSpan.FromSeconds(2), () =>
+            {
+                show = false;
+            });
+            StartTimer(TimeSpan.FromSeconds(2 + 5), () =>
+            {
+                show = true;
+            });
+            StartTimer(TimeSpan.FromSeconds(2 + 5 + 3), () =>
+            {
+                show = false;
+            });
             _timer = new(TimeSpan.FromSeconds(5));
             _timer.Elapsed += (sender, args) =>
             {
@@ -105,5 +129,17 @@
             _timer.Start();
         }
         base.OnAfterRender(firstRender);
+    }
+
+    private System.Timers.Timer? StartTimer(TimeSpan delay, Action action)
+    {
+        return TimerHelper.StartNewOneTimeTimer(delay, () =>
+        {
+            InvokeAsync(() =>
+            {
+                action();
+                StateHasChanged();
+            });
+        });
     }
 }

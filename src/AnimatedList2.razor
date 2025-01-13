@@ -1,0 +1,40 @@
+﻿
+<CascadingValue Value="this">
+
+    <div class="animated-list">
+        @* @if (ChildContent is not null)
+        {
+            @ChildContent
+            AfterChildContentRender();
+        }
+ *@
+        @* @Item(new()) *@
+
+        @foreach (var item in Items)
+        {
+            @:@(item.Key) - @(item.ShouldStayVisible.ToString()) <br/>
+        }
+
+        @* @(Status ?? "") <br /> *@
+
+        @foreach (var item in Items)
+        {
+            <AnimatedVisibility @key=@item.Key
+                                Visible=@item.ShouldStayVisible
+                                StartWithTransition
+                                OnHidden="() => OnElementHided(item.Key)"
+                                Enter=@ItemEnter
+                                Exit=@ItemExit>
+                @item.Fragment 
+            </AnimatedVisibility>
+        }
+    </div>
+
+</CascadingValue>
+
+@code {
+    private RenderFragment ChildContentWrapper =>
+        @<CascadingValue Value="@_itemsCollection">
+            @ChildContent
+        </CascadingValue>;
+}

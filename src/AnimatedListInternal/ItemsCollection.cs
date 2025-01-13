@@ -7,133 +7,202 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlazorCssTransitions.AnimatedListInternal;
-internal class ItemsCollection(
-    ExternalRenderer externalRenderer)
+
+internal class ItemsCollection<TItem>(Func<Task> onItemsChanged)
+    where TItem : IAnimatedListItemModel
 {
-    private readonly ExternalRenderer _externalRenderer = externalRenderer;
+    private readonly Func<Task> _onItemsChanged = onItemsChanged;
 
-    private readonly Dictionary<string, Item> _itemsByKey = [];
-    /// <summary>
-    /// Current keys in order that they have to be displayed
-    /// </summary>
-    private readonly List<string> _currentKeysInOrder = new();
+    public IEnumerable<ItemState<TItem>>? ItemsState => _itemsState;
+    private List<ItemState<TItem>>? _itemsState;
 
-    /// <summary>
-    /// Keys gathered when items are added, in order they appeared in fragment
-    /// </summary>
-    private readonly List<string> _keysOfNewItems = new();
-    /// <summary>
-    /// Keys that were previously not present in the dictionary, in order they appeared in fragment
-    /// </summary>
-    private readonly List<string> _keysOfNewlyAddedNewItems = new();
-
-    public async Task<IEnumerable<Item>> ProcessItems(RenderFragment fragmentWithItemsToProcess)
+    public async Task ProcessItemModels(IEnumerable<TItem>? items)
     {
-        _keysOfNewItems.Clear();
-        _keysOfNewlyAddedNewItems.Clear();
-        string[] previousKeysInOrder = [.. _currentKeysInOrder];
+        var itemsListed = items?.ToList();
 
-        await _externalRenderer.Render(fragmentWithItemsToProcess);
+        EnsureNoDuplicateKeys(itemsListed);
 
-        InitiateDisappearanceOfNoLongerPresentItems(previousKeysInOrder);
-
-        SetKeysInOrder(previousKeysInOrder);
-
-        return GetItemsOrdered();
-    }
-
-    public IEnumerable<Item> ProcessItemDeletionByKey(string key)
-    {
-        if (_itemsByKey.Remove(key))
-        {
-            _currentKeysInOrder.Remove(key);
-        }
-
-        return GetItemsOrdered();
     }
 
 
-    internal void AddItem(string key, RenderFragment fragment)
+    private static void EnsureNoDuplicateKeys(IList<TItem>? items)
     {
-        _keysOfNewItems.Add(key);
-
-        if (!_itemsByKey.ContainsKey(key))
-            _keysOfNewlyAddedNewItems.Add(key);
-
-        _itemsByKey[key] = new Item
-        {
-            Key = key,
-            ShouldStayVisible = true,
-            Fragment = fragment
-        };
-    }
-
-    private void InitiateDisappearanceOfNoLongerPresentItems(string[] previousKeysInOrder)
-    {
-        if (previousKeysInOrder is not { Length: > 0})
-        {
+        if (items is null)
             return;
-        }
 
-        var removedElementKeys = previousKeysInOrder.Except(_keysOfNewItems);
-
-        foreach (var key in removedElementKeys)
+        for (int i = 1; i < items.Count; i++)
         {
-            if (_itemsByKey.TryGetValue(key, out var item))
+            for (int j = 0; j < i; j++)
             {
-                _itemsByKey[key] = new Item
-                {
-                    Key = item.Key,
-                    ShouldStayVisible = false,
-                    Fragment = item.Fragment
-                };
+                if (items[i].Key == items[j].Key)
+                    throw new Exception($"There is a duplicate key \"{items[i].Key}\" in AnimatedList items");
             }
         }
     }
 
-    private void SetKeysInOrder(string[] previousKeysInOrder)
+
+    private void AdjustItemsState(IList<TItem>? items)
     {
-        if (_currentKeysInOrder.Count == 0)
-        {
-            _currentKeysInOrder.AddRange(_keysOfNewItems);
+        var modificationType = DetermineItemsModificationType(items);
+
+        if (modificationType is ItemsModificationType.NoChange)
             return;
+
+        if (modificationType is ItemsModificationType.OnlyAdditions)
+        {
+
         }
 
-        // TODO currently supported is mainly just insertion in the end and deletion
-        _currentKeysInOrder.AddRange(_keysOfNewlyAddedNewItems);
+        _itemsState ??= new List<ItemState<TItem>>();
 
-        //int offsetInFinalKeys = 0;
-        //int[] indexesOfNewlyInsertedKeys = [];
-        //for (int newKeyIndex = 0; newKeyIndex < _keysOfNewItems.Count; newKeyIndex++)
-        //{
-        //    var key = _keysOfNewItems[newKeyIndex];
-        //    int existsInUpdatedOrder = _currentKeysInOrder.IndexOf(key);
+        foreach (var itemState in _itemsState)
+        {
+            if (!items.Contains(itemState.Model))
+            {
 
-        //    if (existsInUpdatedOrder > 0)
-        //    {
-        //        offsetInFinalKeys = 
-        //        continue;
-        //    }
+            }
+        }
 
-        //    _currentKeysInOrder.Insert(newKeyIndex)
+        foreach (var item in items)
+        {
 
-        //    if (existsInUpdatedOrder > 0)
-        //    {
-        //        // key exists in the previous order
-        //        _currentKeysInOrder.Insert()
-        //    }
-        //}
+        }
     }
 
-    private List<Item> GetItemsOrdered()
-    {
-        var items = new List<Item>();
 
-        foreach (var key in _currentKeysInOrder)
+    private ItemsModificationType DetermineItemsModificationType(IList<TItem>? items)
+    {
+        if (items is not { Count: > 0 }
+            && _itemsState is { Count: > 0 })
         {
-            items.Add(_itemsByKey[key]);
+            return ItemsModificationType.OnlyRemovals;
         }
 
-        return items;
+        if (items is { Count: > 0 }
+            && _itemsState is not { Count: > 0 })
+        {
+            return ItemsModificationType.OnlyAdditions;
+        }
+
+        if (items is not { Count: > 0 }
+            && _itemsState is not { Count: > 0 })
+        {
+            return ItemsModificationType.NoChange;
+        }
+
+        var smallerAmountOfItems = Math.Min(items!.Count, _itemsState!.Count);
+
+        //TODO maybe construct dictionaries?
+
+        bool isThereAnyReposition = false;
+        bool isThereAnyAddition = false;
+        bool isThereAnyDeletion = false;
+        bool isThereAnyReplacement = false;
+
+        for (int i = 0; i < smallerAmountOfItems; i++)
+        {
+            var modelForNewItem = items[i];
+            var modelForOldItem = _itemsState[i].Model;
+
+            if (modelForNewItem.Equals(modelForOldItem))
+            {
+                continue; // elements match, no change
+            }
+
+            bool doesModelForNewItemExistInOldList = _itemsState.Any(x => x.Model.Equals(modelForNewItem));
+            bool doesModelForOldItemExistInNewList = items.Contains(modelForOldItem);
+
+            if (doesModelForNewItemExistInOldList
+                && doesModelForOldItemExistInNewList)
+            {
+                isThereAnyReposition = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+            else if (doesModelForNewItemExistInOldList)
+            {
+                isThereAnyDeletion = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+            else if (doesModelForOldItemExistInNewList)
+            {
+                isThereAnyAddition = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+            else
+            {
+                isThereAnyReplacement = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange; 
+            }
+        }
+
+        foreach (var item in items.Skip(smallerAmountOfItems))
+        {
+            bool doesModelForNewItemExistInOldList = _itemsState.Any(x => x.Model.Equals(item));
+
+            if (doesModelForNewItemExistInOldList)
+            {
+                isThereAnyReposition = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+            else
+            {
+                isThereAnyAddition = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+        }
+
+        foreach (var item in _itemsState.Skip(smallerAmountOfItems).Select(x => x.Model))
+        {
+            bool doesModelForOldItemExistInNewList = items.Contains(item);
+
+            if (doesModelForOldItemExistInNewList)
+            {
+                isThereAnyReposition = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+            else
+            {
+                isThereAnyDeletion = true;
+                if (IsComplexChange())
+                    return ItemsModificationType.ComplexChange;
+            }
+        }
+
+        bool IsComplexChange()
+            => isThereAnyAddition.ToInt() + isThereAnyDeletion.ToInt() + isThereAnyReplacement.ToInt() + isThereAnyReposition.ToInt() > 2;
+
+        if (isThereAnyAddition)
+            return ItemsModificationType.OnlyAdditions;
+        if (isThereAnyDeletion)
+            return ItemsModificationType.OnlyRemovals;
+        if (isThereAnyReplacement)
+            return ItemsModificationType.OnlyReplacements;
+        if (isThereAnyReposition)
+            return ItemsModificationType.OnlyReposition;
+
+        return ItemsModificationType.NoChange;
+    }
+
+    private class DifferenceAnalysisResult
+    {
+        public required ItemsModificationType ModificationType { get; init; }
+        public Index[]? OnlyRemovalIndexes { get; init; }
+    }
+
+    private enum ItemsModificationType
+    {
+        NoChange,
+        ComplexChange,
+        OnlyRemovals,
+        OnlyAdditions,
+        OnlyReposition,
+        OnlyReplacements
     }
 }

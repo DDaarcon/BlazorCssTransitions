@@ -21,7 +21,7 @@ public static class RegistrationExtensions
 
         collection.AddScoped<ExternalRenderer>();
 
-        collection.AddTransient<AnimatedListInternal.ItemsCollection>();
+        collection.AddTransient<AnimatedListInternal.ItemsCollection2>();
 
         collection.AddSingleton<AnimatedPropertiesCreatorImpl>();
         collection.AddSingleton<AnimatedPropertiesCreator>(services => services.GetRequiredService<AnimatedPropertiesCreatorImpl>());

@@ -17,7 +17,7 @@ public partial class AnimatedListItem : ComponentBase
     public required RenderFragment ChildContent { get; set; }
 
     [CascadingParameter]
-    internal ItemsCollection? Colleciton { get; set; }
+    internal ItemsCollection2? Colleciton { get; set; }
 
     protected override void OnParametersSet()
     {
