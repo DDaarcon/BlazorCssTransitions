@@ -24,50 +24,8 @@
 
     private RenderFragment RenderStates(Func<TState?, StateSwitchCase> getStateCase)
     {
-        var paramsOfStatesToRender = new AnimatedVisibilityParameters[PastStates.Count + 1];
-        
-        var targetStateCase = getStateCase(TargetState);
-        var targetTransitions = TransitionsProvider?.Invoke(default, TargetState);
+        var paramsOfStatesToRender = GetAnimatedVisibilityParametersForRender(getStateCase);
 
-        paramsOfStatesToRender[0] = new AnimatedVisibilityParameters(
-            Visible: true,
-            Enter: targetTransitions?.FromPreviousStateEnter ?? targetStateCase.Enter ?? SharedEnter,
-            Exit: targetTransitions?.ToNextStateExit ?? targetStateCase.Exit ?? SharedExit,
-            StartWithTransition: StartWithTransition || HasInitialTargetStateBeenShown,
-            OnHidden: default,
-            OnShown: new EventCallback(this, () => OnTargetStateElementWasShown()),
-            Key: CurrentStateKey,
-            Fragment: targetStateCase.Fragment
-        );
-
-
-        if (PastStates.Count > 0)
-        {
-            var enterTransitionForPastState = TransitionsProvider?.Invoke(TargetState, GetLastStateOrDefault(1)!);
-
-            for (int pastStateIndexFromEnd = 1; pastStateIndexFromEnd <= PastStates.Count; pastStateIndexFromEnd++)
-            {
-                var pastState = PastStates[^pastStateIndexFromEnd];
-                var pastStateCase = getStateCase(pastState.State);
-                
-                var exitTransitionForPastState = TransitionsProvider?.Invoke(GetLastStateOrDefault(pastStateIndexFromEnd), GetLastStateOrDefault(pastStateIndexFromEnd + 1)!);
-                
-                paramsOfStatesToRender[pastStateIndexFromEnd] = new AnimatedVisibilityParameters(
-                    Visible: false,
-                    Enter: enterTransitionForPastState?.FromPreviousStateEnter ?? pastStateCase.Enter ?? SharedEnter,
-                    Exit: exitTransitionForPastState?.ToNextStateExit ?? pastStateCase.Exit ?? SharedExit,
-                    StartWithTransition: false,
-                    OnHidden: new EventCallback(this, () => OnPastStateElementWasHidden(pastState)),
-                    OnShown: default,
-                    Key: pastState.Key,
-                    Fragment: pastStateCase.Fragment
-                );
-
-                enterTransitionForPastState = exitTransitionForPastState;
-            }
-        }
-
-        
         if (!NewStateOnTop)
             return
                 @<text>
@@ -106,30 +64,5 @@
                     </AnimatedVisibility>
                 }
             </text>;
-    }
-
-    private record AnimatedVisibilityParameters(
-        bool Visible,
-        EnterTransition? Enter,
-        ExitTransition? Exit,
-        bool StartWithTransition,
-        EventCallback OnHidden,
-        EventCallback OnShown,
-        int Key,
-        RenderFragment Fragment
-    );
-
-    private TState? GetLastStateOrDefault(int? forPastStateWithIndexFromEnd = null)
-    {
-        if (PastStates.Count == 0)
-            return default;
-
-        if (!forPastStateWithIndexFromEnd.HasValue)
-            return PastStates.Last().State;
-
-        if (PastStates.Count < forPastStateWithIndexFromEnd.Value)
-            return default;
-
-        return PastStates[^forPastStateWithIndexFromEnd.Value].State;
     }
 }
