@@ -4,27 +4,19 @@
 <div class=@ContainerClasses
      style=@ContainerStyles>
 
-    @if (ChildContent is not null)
+    @if (ChildContent is not null
+        || Switch is not null)
     {
-        @RenderStates(
-            getStateCase: state => ChildContent(state)
-        )
-    }
-
-    else if (Switch is not null)
-    {
-        @RenderStates(
-            getStateCase: Switch
-        )
+        @RenderStates()
     }
 
 </div>
 
 @code {
 
-    private RenderFragment RenderStates(Func<TState?, StateSwitchCase> getStateCase)
+    private RenderFragment RenderStates()
     {
-        var paramsOfStatesToRender = GetAnimatedVisibilityParametersForRender(getStateCase);
+        var paramsOfStatesToRender = GetAnimatedVisibilityParametersForRender();
 
         if (!NewStateOnTop)
             return
