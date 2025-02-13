@@ -14,6 +14,8 @@
 
 @code {
 
+    private const string _keepContentInBoundsStyle = "min-height: 0;";
+
     private RenderFragment RenderStates()
     {
         var paramsOfStatesToRender = GetAnimatedVisibilityParametersForRender();
@@ -32,6 +34,7 @@
                                             OnHidden=@(parameters.OnHidden)
                                             OnShown=@(parameters.OnShown)
                                             Class="animated-content-item"
+                                            Style=@(KeepContentInBounds ? _keepContentInBoundsStyle : null)
                                             @key=@(parameters.Key)>
                             @(parameters.Fragment)
                         </AnimatedVisibility>
@@ -51,6 +54,7 @@
                                         OnHidden=@(parameters.OnHidden)
                                         OnShown=@(parameters.OnShown)
                                         Class="animated-content-item"
+                                        Style=@(KeepContentInBounds ? _keepContentInBoundsStyle : null)
                                         @key=@(parameters.Key)>
                         @(parameters.Fragment)
                     </AnimatedVisibility>

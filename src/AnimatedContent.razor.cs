@@ -54,6 +54,12 @@ public partial class AnimatedContent<TState>
     public string? Class { get; set; }
 
     /// <summary>
+    /// Prevents content from exceeding bounds of the container.
+    /// </summary>
+    [Parameter]
+    public bool KeepContentInBounds { get; set; }
+
+    /// <summary>
     /// Shared enter transition. Is be used when <see cref="TransitionsProvider"/> and <see cref="Switch"/> return <c>null</c> for enter transition.
     /// </summary>
     [Parameter]
