@@ -1,9 +1,11 @@
 ﻿
-@implements IDisposable
+@if (!ShouldNotRenderAnything)
+{
+    <div class=@GetContainerClasses()
+         style=@GetContainerStyle()
+         @ref=@_containerElement>
 
-<div class=@GetContainerClasses()
-     style=@GetContainerStyle()>
+        @ChildContent
 
-    @ChildContent
-
-</div>
+    </div>
+}

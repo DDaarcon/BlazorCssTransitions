@@ -1,12 +1,19 @@
 ﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
 using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.CssStylesValidation;
 using BlazorCssTransitions.Specifications;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorCssTransitions;
 
-public partial class AnimatedVisibility
+public partial class AnimatedVisibility : IDisposable
 {
+    [Inject]
+    private ICssStylesAppliedValidator _cssStylesAppliedValidator { get; init; } = default!;
+    [Inject]
+    private ITimerService _timerService { get; init; } = default!;
+
+
     [Parameter, EditorRequired]
     public required bool Visible { get; set; }
 
@@ -41,11 +48,27 @@ public partial class AnimatedVisibility
     [Parameter]
     public EventCallback<State> OnStateChanged { get; set; }
 
+    [Parameter]
+    public bool RemoveFromDOMWhenHidden { get; set; }
+
+
+    public enum State
+    {
+        Hidden,
+        Showing,
+        Shown,
+        Hiding
+    }
+
 
 
     private State _currentState;
-    private bool _isFirstRender;
+    private bool _isAfterInitialParametersSet;
+    private bool _isCurrentRenderAddingContainerToDOM;
 
+    private bool ShouldNotRenderAnything { get; set; }
+
+    private ElementReference _containerElement { get; set; }
 
     protected override void OnInitialized()
     {
@@ -60,15 +83,32 @@ public partial class AnimatedVisibility
             (false, true) => State.Shown,
         };
 
-        _isFirstRender = true;
+        _isAfterInitialParametersSet = false;
+
+        _isCurrentRenderAddingContainerToDOM = 
+            !RemoveFromDOMWhenHidden // always start with rendering if RemoveFromDOMWhenHidden is false
+            || Visible // even if RFDWH is true, visible should be rendered
+            || StartWithTransition; // even if not visible, render when starts from transition to be hidden
+
+        ShouldNotRenderAnything = !_isCurrentRenderAddingContainerToDOM;
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (_isFirstRender)
+        if (!_isAfterInitialParametersSet)
         {
-            _isFirstRender = false;
+            _isAfterInitialParametersSet = true;
             await NotifyAboutStateChange();
+            return;
+        }
+
+        if (ShouldNotRenderAnything
+            && Visible)
+        {
+            // when element removed from DOM should become visible
+            // state should be Hidden
+            ShouldNotRenderAnything = false;
+            _isCurrentRenderAddingContainerToDOM = true;
             return;
         }
 
@@ -86,17 +126,25 @@ public partial class AnimatedVisibility
         await SetIntermediateState();
     }
 
-
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && StartWithTransition)
+        if (ShouldRerenderAfterAddingContainerToDOM(firstRender))
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(20)); // TODO find a better way
+            _isCurrentRenderAddingContainerToDOM = false;
+            await _cssStylesAppliedValidator.EnsureStylesWereApplied(_containerElement);
 
             await SetIntermediateState();
             StateHasChanged();
         }
+    }
+
+    private bool ShouldRerenderAfterAddingContainerToDOM(bool firstRender)
+    {
+        if (!_isCurrentRenderAddingContainerToDOM)
+            return false;
+
+        return (firstRender && StartWithTransition)
+            || RemoveFromDOMWhenHidden;
     }
 
     private async Task SetIntermediateState()
@@ -118,7 +166,7 @@ public partial class AnimatedVisibility
     }
 
 
-    private System.Timers.Timer? _transitionTimer;
+    private ITimerService.ITimerRegistration? _transitionTimer;
 
     private void OnSetIntermediateState()
     {
@@ -129,8 +177,7 @@ public partial class AnimatedVisibility
             _ => throw new Exception($"State {_currentState} is not intermediate")
         };
 
-        _transitionTimer?.Dispose();
-        _transitionTimer = TimerHelper.StartNewOneTimeTimer(longestDuration, () =>
+        _transitionTimer = _timerService.StartNew(longestDuration, () =>
         {
             InvokeAsync(async () =>
             {
@@ -141,10 +188,16 @@ public partial class AnimatedVisibility
                     _ => _currentState
                 };
 
+                if (_currentState is State.Hidden
+                    && RemoveFromDOMWhenHidden)
+                {
+                    ShouldNotRenderAnything = true;
+                }
+
                 await NotifyAboutStateChange();
                 StateHasChanged();
             });
-        });
+        }, oldRegistration: _transitionTimer);
     }
 
     private async Task NotifyAboutStateChange()
@@ -167,11 +220,11 @@ public partial class AnimatedVisibility
         IEnumerable<string> styles = [
             _currentState switch
             {
-            State.Hidden => _enter.GetInitialStyle(),
-            State.Showing => _enter.GetFinishStyle(),
-            State.Shown => _exit.GetInitialStyle(),
-            State.Hiding => _exit.GetFinishStyle(),
-            _ => throw new Exception($"State {_currentState} is not valid")
+                State.Hidden => _enter.GetInitialStyle(),
+                State.Showing => _enter.GetFinishStyle(),
+                State.Shown => _exit.GetInitialStyle(),
+                State.Hiding => _exit.GetFinishStyle(),
+                _ => throw new Exception($"State {_currentState} is not valid")
             }
         ];
 
@@ -190,11 +243,11 @@ public partial class AnimatedVisibility
             _containerClass,
             _currentState switch
             {
-            State.Hidden => _enter.GetInitialClasses(),
-            State.Showing => _enter.GetFinishClasses(),
-            State.Shown => _exit.GetInitialClasses(),
-            State.Hiding => _exit.GetFinishClasses(),
-            _ => ""
+                State.Hidden => _enter.GetInitialClasses(),
+                State.Showing => _enter.GetFinishClasses(),
+                State.Shown => _exit.GetInitialClasses(),
+                State.Hiding => _exit.GetFinishClasses(),
+                _ => ""
             }
         ];
 
@@ -204,18 +257,8 @@ public partial class AnimatedVisibility
         return String.Join(" ", classes);
     }
 
-
-    public enum State
-    {
-        Hidden,
-        Showing,
-        Shown,
-        Hiding
-    }
-
-
     public void Dispose()
     {
-        _transitionTimer?.Dispose();
+        _transitionTimer?.Abort();
     }
 }
