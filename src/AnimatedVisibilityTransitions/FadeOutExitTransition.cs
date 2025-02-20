@@ -6,10 +6,7 @@ internal class FadeOutExitTransition : BaseSpecificExitTransition
 {
     public FadeOutExitTransition(Spec spec, float initialOpacity, float finishOpacity)
     {
-        TransitionAllTimeStyle = $"""
-            --start-fade-out-opacity: {initialOpacity.ToCss()};
-            --finish-fade-out-opacity: {finishOpacity.ToCss()};
-            """;
+        TransitionAllTimeStyle = $"--start-fade-out-opacity: {initialOpacity.ToCss()};--finish-fade-out-opacity: {finishOpacity.ToCss()};";
         TransitionInitialClass = _initialClass;
         TransitionFinishClass = _finishClass;
         Specification = spec;

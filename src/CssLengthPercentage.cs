@@ -24,7 +24,7 @@ public readonly struct CssLengthPercentage
 	public CssLengthPercentage(string value)
 	{
 		if (!CssLengthPercentagePropertySyntaxValidator.Validate(value))
-			throw ValueParsingException.ThrowFor<CssLengthPercentage>(value);
+			throw ValueParsingException.NewFor<CssLengthPercentage>(value);
 
 		_value = value;
 	}

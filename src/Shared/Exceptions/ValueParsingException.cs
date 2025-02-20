@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BlazorCssTransitions.Shared.Exceptions;
+﻿namespace BlazorCssTransitions.Shared.Exceptions;
 
 public class ValueParsingException : Exception
 {
@@ -14,6 +8,6 @@ public class ValueParsingException : Exception
 
 	}
 
-	public static ValueParsingException ThrowFor<TExpectedType>(string invalidValue)
+	public static ValueParsingException NewFor<TExpectedType>(string invalidValue)
 		=> new(invalidValue, typeof(TExpectedType).Name);
 }

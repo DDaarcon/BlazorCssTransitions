@@ -1,6 +1,8 @@
 ﻿using BlazorCssTransitions.Shared;
 
 namespace BlazorCssTransitions.AnimatedVisibilityTransitions;
+
+// TODO reduce number of string creations
 internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
     where TTransition : IBaseTransition
 {
@@ -31,11 +33,7 @@ internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
 
     internal override string GetInitialStyle()
     {
-        return $"""
-            {TransitionAllTimeStyle ?? ""}
-            {TransitionInitialStyle ?? ""}
-            {Specification.GetStyle(TransitionedProperty)}
-            """;
+        return $"{TransitionAllTimeStyle ?? ""}{TransitionInitialStyle ?? ""}{Specification.GetStyle(TransitionedProperty)}";
     }
 
 
@@ -52,19 +50,13 @@ internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
 
     internal override string GetFinishStyle()
     {
-        return $"""
-            {TransitionAllTimeStyle ?? ""}
-            {TransitionFinishStyle ?? ""}
-            {Specification.GetStyle(TransitionedProperty)}
-            """;
+        return $"{TransitionAllTimeStyle ?? ""}{TransitionFinishStyle ?? ""}{Specification.GetStyle(TransitionedProperty)}";
     }
 
+    // TODO maybe remove
     internal override string GetFinishedStyle()
     {
-        return $"""
-            {TransitionAllTimeStyle ?? ""}
-            {TransitionFinishStyle ?? ""}
-            """;
+        return $"{TransitionAllTimeStyle ?? ""}{TransitionFinishStyle ?? ""}";
     }
 
 
@@ -77,18 +69,12 @@ internal abstract class BaseSpecificTransition<TTransition> : BaseTransition
 
     internal string GetInitialStyleWithoutSpecification()
     {
-        return $"""
-            {TransitionAllTimeStyle ?? ""}
-            {TransitionInitialStyle ?? ""}
-            """;
+        return $"{TransitionAllTimeStyle ?? ""}{TransitionInitialStyle ?? ""}";
     }
 
     internal string GetFinishStyleWithoutSpecification()
     {
-        return $"""
-            {TransitionAllTimeStyle ?? ""}
-            {TransitionFinishStyle ?? ""}
-            """;
+        return $"{TransitionAllTimeStyle ?? ""}{TransitionFinishStyle ?? ""}";
     }
 
     internal override IEnumerable<Spec> GetSpecifications()

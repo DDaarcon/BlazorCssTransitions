@@ -4,10 +4,7 @@ internal sealed class SlideInEnterTransition : BaseSpecificEnterTransition
 {
     public SlideInEnterTransition(Spec spec, CssLengthPercentage initialOffsetX, CssLengthPercentage initialOffsetY)
     {
-        TransitionAllTimeStyle = $"""
-            --start-slide-in-offset-x: {initialOffsetX};
-            --start-slide-in-offset-y: {initialOffsetY};
-            """;
+        TransitionAllTimeStyle = $"--start-slide-in-offset-x: {initialOffsetX};--start-slide-in-offset-y: {initialOffsetY};";
         TransitionInitialClass = _initialClass;
         TransitionFinishClass = _finishClass;
         TransitionedProperty = "translate";

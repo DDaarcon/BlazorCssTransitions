@@ -28,7 +28,7 @@ public readonly struct CssPercentage : IComparable<CssPercentage>
 	{
 		var validationResult = CssPercentagePropertySyntaxValidator.Validate(value);
 		if (!validationResult.IsValid)
-			throw ValueParsingException.ThrowFor<CssPercentage>(value);
+			throw ValueParsingException.NewFor<CssPercentage>(value);
 
 		_value = value;
 		_isWithSign = validationResult.ContainsSign;

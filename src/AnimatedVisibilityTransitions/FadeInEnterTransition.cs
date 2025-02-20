@@ -6,10 +6,7 @@ internal sealed class FadeInEnterTransition : BaseSpecificEnterTransition
 {
     public FadeInEnterTransition(Spec spec, float initialOpacity, float finishOpacity)
     {
-        TransitionAllTimeStyle = $"""
-            --start-fade-in-opacity: {initialOpacity.ToCss()};
-            --finish-fade-in-opacity: {finishOpacity.ToCss()};
-            """;
+        TransitionAllTimeStyle = $"--start-fade-in-opacity: {initialOpacity.ToCss()};--finish-fade-in-opacity: {finishOpacity.ToCss()};";
         TransitionInitialClass = _initialClass;
         TransitionFinishClass = _finishClass;
         Specification = spec;

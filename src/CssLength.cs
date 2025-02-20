@@ -21,7 +21,7 @@ public readonly struct CssLength
 	public CssLength(string value)
 	{
 		if (!CssLengthPropertySyntaxValidator.Validate(value))
-			throw ValueParsingException.ThrowFor<CssLength>(value);
+			throw ValueParsingException.NewFor<CssLength>(value);
 
 		_value = value;
 	}
