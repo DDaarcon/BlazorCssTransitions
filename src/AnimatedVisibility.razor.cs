@@ -32,12 +32,12 @@ public partial class AnimatedVisibility : IDisposable
     [Parameter]
     public EnterTransition? Enter { get; set; }
     private BaseTransition _enter = default!;
-    private static readonly EnterTransition _defaultEnter = EnterTransition.FadeIn();
+    internal static readonly EnterTransition _defaultEnter = EnterTransition.FadeIn();
 
     [Parameter]
     public ExitTransition? Exit { get; set; }
     private BaseTransition _exit = default!;
-    private static readonly ExitTransition _defaultExit = ExitTransition.FadeOut();
+    internal static readonly ExitTransition _defaultExit = ExitTransition.FadeOut();
 
     [Parameter]
     public EventCallback OnShown { get; set; }
@@ -197,7 +197,7 @@ public partial class AnimatedVisibility : IDisposable
                 await NotifyAboutStateChange();
                 StateHasChanged();
             });
-        }, oldRegistration: _transitionTimer);
+        }, caller: this, oldRegistration: _transitionTimer);
     }
 
     private async Task NotifyAboutStateChange()
@@ -261,4 +261,13 @@ public partial class AnimatedVisibility : IDisposable
     {
         _transitionTimer?.Abort();
     }
+
+#if UNITTESTS
+    private static int _instanceCounter = 0;
+    private int _instanceNumber = _instanceCounter++;
+    public override string ToString()
+    {
+        return $"{nameof(AnimatedVisibility)}-{_instanceNumber}";
+    }
+#endif
 }

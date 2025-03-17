@@ -36,19 +36,38 @@ public class BCTTestContext : TestContext, IAsyncLifetime
     protected virtual Task OnTestTearDown()
         => Task.CompletedTask;
 
+    /// <summary>
+    /// To be used in <see cref="CreateCompletionAwaiter(TimeSpan?)"/> when debugging test
+    /// </summary>
     protected static readonly TimeSpan DebugTimeout = TimeSpan.FromHours(1);
 
-    protected TaskCompletionSource CreateCompletionAwaiter(TimeSpan? customTimeout = null)
+
+    protected TestCompletionAwaiter CreateCompletionAwaiter(TimeSpan? customTimeout = null, Func<Exception>? onTimeout = null)
     {
         var completionAwaiter = new TaskCompletionSource();
 
+        // normally tests should not take more than 10 sec
         var cancellationSource = new CancellationTokenSource(customTimeout ?? TimeSpan.FromSeconds(10));
 
-        cancellationSource.Token.Register(() => completionAwaiter.SetException(new Exception("Test timeout")));
+        cancellationSource.Token.Register(() => completionAwaiter.SetException(onTimeout?.Invoke() ?? new Exception("Test timeout")));
 
         completionAwaiter.Task.ContinueWith(task => cancellationSource.Dispose());
 
-        return completionAwaiter;
+        return new TestCompletionAwaiter(completionAwaiter);
+    }
+
+    protected class TestCompletionAwaiter(TaskCompletionSource source)
+    {
+        public void MarkAsFinished()
+        {
+            if (source.Task.IsFaulted)
+                throw source.Task.Exception;
+            if (source.Task.IsCompleted)
+                return;
+            source.SetResult();
+        }
+        public async Task WaitForFinish()
+            => await source.Task;
     }
 
 

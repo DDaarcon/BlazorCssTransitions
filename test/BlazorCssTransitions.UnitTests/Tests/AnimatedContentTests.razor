@@ -1,0 +1,10 @@
+﻿
+@inherits BCTTestContext
+
+@code {
+    private RenderFragment<States> SampleContent()
+        => state => @<span>@(state.ToString())</span>;
+
+    private string SampleContentText(States state)
+        => $"<span>{state}</span>";
+}

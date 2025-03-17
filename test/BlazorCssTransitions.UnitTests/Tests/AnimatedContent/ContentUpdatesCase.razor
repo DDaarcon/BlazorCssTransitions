@@ -1,0 +1,12 @@
+﻿
+<AnimatedContent TState=@AnimatedContentTests.States
+                 TargetState=@AnimatedContentTests.States.Zero
+                 SharedEnter=@AnimatedContentTests._enter
+                 SharedExit=@AnimatedContentTests._exit>
+    @InnerContent
+</AnimatedContent>
+
+@code {
+    [Parameter]
+    public required string InnerContent { get; set; }
+}

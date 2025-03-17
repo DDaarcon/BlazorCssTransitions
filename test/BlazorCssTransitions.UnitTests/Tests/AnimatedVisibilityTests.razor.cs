@@ -46,7 +46,7 @@ public partial class AnimatedVisibilityTests
                             </div>
                             """);
 
-                        TimerService.SetResultForAwaitingTimers(FakeTimerService.TimerAction.Act);
+                        TimerService.SetResultForAllAwaitingTimers(FakeTimerService.TimerAction.Act);
                         break;
                     case 2:
                         // finish of fade in transition
@@ -55,12 +55,12 @@ public partial class AnimatedVisibilityTests
                                 {SampleContentText}
                             </div>
                             """);
-                        waitForCompletion.SetResult();
+                        waitForCompletion.MarkAsFinished();
                         break;
                 }
             });
 
-        await waitForCompletion.Task;
+        await waitForCompletion.WaitForFinish();
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public partial class AnimatedVisibilityTests
                                 {SampleContentText}
                             </div>
                             """);
-                        TimerService.SetResultForAwaitingTimers(FakeTimerService.TimerAction.Act);
+                        TimerService.SetResultForAllAwaitingTimers(FakeTimerService.TimerAction.Act);
                         break;
                     case 3:
                         // finish of fade in transition
@@ -114,11 +114,11 @@ public partial class AnimatedVisibilityTests
                                 {SampleContentText}
                             </div>
                             """);
-                        waitForCompletion.SetResult();
+                        waitForCompletion.MarkAsFinished();
                         break;
                 }
             });
 
-        await waitForCompletion.Task;
+        await waitForCompletion.WaitForFinish();
     }
 }

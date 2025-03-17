@@ -19,13 +19,14 @@ public partial class AnimatedContent<TState>
     [Parameter]
     public RenderFragment<TState?>? ChildContent { get; set; }
     /// <summary>
-    /// Provides enter transition for appearing content and exit transition for disappearing content.
+    /// Provides enter transition for appearing content and exit transition for disappearing content. <br />
+    /// It may be called even if transitons are already assigned and cached.
     /// </summary>
     [Parameter]
-    public Func<StateChange, InterstateTransitions>? TransitionsProvider { get; set; }
+    public Func<StateChange, InterstateTransitions?>? TransitionsProvider { get; set; }
 
     /// <summary>
-    /// Newer content should render above older one.
+    /// Newer content should render above older one (later in DOM).
     /// </summary>
     [Parameter]
     public bool NewStateOnTop { get; set; }
@@ -33,8 +34,10 @@ public partial class AnimatedContent<TState>
     /// <summary>
     /// Initial content should appear with enter transition.
     /// </summary>
+    /// Do not rerender after change - applicable only at start
     [Parameter]
     public bool StartWithTransition { get; set; }
+    
 
     /// <summary>
     /// Callback for when target content is fully shown.
@@ -77,14 +80,22 @@ public partial class AnimatedContent<TState>
     [Parameter]
     public bool ReassignTransitionsOnEachUpdate { get; set; }
 
-
+    /// <summary>
+    /// States for transition
+    /// </summary>
+    /// <param name="Source">Source state, from which content transitions to target state</param>
+    /// <param name="Target">Target state, to which content transitions from source state</param>
+    /// <param name="IsSourcePresent">Whether source state had been applied. Especially useful when dealing with value types.</param>
     public readonly record struct StateChange(
         TState? Source,
-        TState? Target);
+        TState? Target,
+        bool IsSourcePresent = true);
 
     public class InterstateTransitions
     {
+        // TODO explanation
         public EnterTransition? TargetEnter { get; init; }
+        // TODO explanation
         public ExitTransition? SourceExit { get; init; }
     }
 
@@ -109,6 +120,14 @@ public partial class AnimatedContent<TState>
     private int _currentStateKey = 0;
     private bool _hasInitialTargetStateBeenShown = false;
 
+
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        var childContent = parameters.GetValueOrDefault<RenderFragment<TState?>>(nameof(ChildContent));
+        return base.SetParametersAsync(parameters);
+    }
+
+
     protected override void OnParametersSet()
     {
         if (!_targetStateData.HasValue || !EqualityComparer<TState>.Default.Equals(_targetStateData.Value.State, TargetState))
@@ -125,11 +144,24 @@ public partial class AnimatedContent<TState>
                 State = TargetState
             };
         }
+
+        _shouldRerender = true;
     }
+
 
     protected override void OnAfterRender(bool firstRender)
     {
         _hasInitialTargetStateBeenShown = true;
+    }
+
+    private bool _shouldRerender = false;
+    protected override bool ShouldRender()
+    {
+        if (!_shouldRerender)
+            return false;
+
+        _shouldRerender = false;
+        return true;
     }
 
 
@@ -141,6 +173,7 @@ public partial class AnimatedContent<TState>
     private void OnPastStateElementWasHidden(StateData pastState)
     {
         _pastStatesData.Remove(pastState);
+        _shouldRerender = true;
     }
 
     private string ContainerStyles
@@ -191,9 +224,13 @@ public partial class AnimatedContent<TState>
         var paramsOfStatesToRender = new AnimatedVisibilityParameters[_pastStatesData.Count + 1];
 
         var targetStateCase = GetStateCase(_targetStateData.Value.State);
-        var targetTransitions = TransitionsProvider?.Invoke(new StateChange(
-            Source: default,
-            Target: _targetStateData.Value.State));
+
+        bool hasAnyPastStates = _pastStatesData.Count > 0;
+
+        InterstateTransitions? targetTransitions = TransitionsProvider?.Invoke(new StateChange(
+            Source: hasAnyPastStates ? _pastStatesData[^1].State : default,
+            Target: _targetStateData.Value.State,
+            IsSourcePresent: hasAnyPastStates));
 
         EnterTransition? enter = null;
         ExitTransition? exit = null;
@@ -219,20 +256,21 @@ public partial class AnimatedContent<TState>
 
         if (_pastStatesData.Count > 0)
         {
-            var fromProcessedToNewerStateTransitions = TransitionsProvider?.Invoke(new StateChange(
-                Source: _pastStatesData[^1].State,
-                Target: _targetStateData.Value.State));
+            InterstateTransitions? fromProcessedToNewerStateTransitions = targetTransitions;
 
             for (int pastStateIndexFromEnd = 1; pastStateIndexFromEnd <= _pastStatesData.Count; pastStateIndexFromEnd++)
             {
                 var pastState = _pastStatesData[^pastStateIndexFromEnd];
                 var pastStateCase = GetStateCase(pastState.State);
 
-                var fromOlderToProcessedStateTranstions = TransitionsProvider?.Invoke(new StateChange(
-                    Source: pastStateIndexFromEnd + 1 <= _pastStatesData.Count 
+                bool hasEarlierState = pastStateIndexFromEnd + 1 <= _pastStatesData.Count;
+
+                InterstateTransitions? fromOlderToProcessedStateTranstions = TransitionsProvider?.Invoke(new StateChange(
+                    Source: hasEarlierState
                         ? _pastStatesData[^(pastStateIndexFromEnd + 1)].State
                         : default,
-                    Target: _pastStatesData[^pastStateIndexFromEnd].State));
+                    Target: _pastStatesData[^pastStateIndexFromEnd].State,
+                    IsSourcePresent: hasEarlierState));
 
                 (enter, exit) = GetProperTransitionsForPastStateAndCacheIfRequired(
                     state: pastState,

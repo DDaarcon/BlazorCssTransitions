@@ -1,0 +1,269 @@
+﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
+using Bunit;
+using Shouldly;
+
+namespace BlazorCssTransitions.UnitTests.Tests;
+
+public partial class AnimatedContentTests
+{
+
+    internal static EnterTransition _enter = EnterTransition.FadeIn(Spec.Linear100ms);
+    internal static BaseTransition EnterBase => (BaseTransition)_enter;
+    
+    internal static ExitTransition _exit = ExitTransition.FadeOut(Spec.EaseIn200ms);
+    internal static BaseTransition ExitBase => (BaseTransition)_exit;
+    
+    
+    internal static EnterTransition _enter2 = EnterTransition.FadeIn(Spec.Linear200ms);
+    internal static BaseTransition Enter2Base => (BaseTransition)_enter2;
+    
+    internal static ExitTransition _exit2 = ExitTransition.FadeOut(Spec.EaseIn500ms);
+    internal static BaseTransition Exit2Base => (BaseTransition)_exit2;
+
+
+
+    internal static BaseTransition DefaultAnimatedVisibilityEnterBase => (BaseTransition)AnimatedVisibility._defaultEnter;
+    internal static BaseTransition DefaultAnimatedVisibilityExitBase => (BaseTransition)AnimatedVisibility._defaultExit;
+
+    internal enum States
+    {
+        Zero,
+        One,
+        Two
+    }
+
+    [Fact]
+    public async Task When_StateSwitches_Then_ShouldRenderInSpecificWay()
+    {
+        var counters = new Counters();
+
+        Func<AnimatedContent<States>.StateChange, AnimatedContent<States>.InterstateTransitions> transitionProvider = (stateChange) =>
+        {
+            switch (counters.Renders)
+            {
+                case 0:
+                    counters.TransitionsCalcsThisRender.ShouldBeLessThanOrEqualTo(0);
+                    stateChange.Source.ShouldBe((States)0);
+                    stateChange.IsSourcePresent.ShouldBeFalse();
+                    stateChange.Target.ShouldBe(States.Zero);
+                    break;
+                case 1:
+                    counters.TransitionsCalcsThisRender.ShouldBeLessThanOrEqualTo(1);
+                    switch (counters.GetAndIncreaseTransitionsCalcsThisRender())
+                    {
+                        case 0:
+                            stateChange.Source.ShouldBe(States.Zero);
+                            stateChange.IsSourcePresent.ShouldBeTrue();
+                            stateChange.Target.ShouldBe(States.One);
+                            break;
+                        case 1:
+                            stateChange.IsSourcePresent.ShouldBeFalse();
+                            stateChange.Target.ShouldBe(States.Zero);
+                            break;
+
+                    }
+                    break;
+            }
+
+            return new AnimatedContent<States>.InterstateTransitions
+            {
+                SourceExit = _exit,
+                TargetEnter = _enter
+            };
+        };
+
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.TransitionsProvider, transitionProvider)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        counters.GetAndIncreaseRenders();
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                        style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+            </div>
+            """);
+
+        cut!.SetParametersAndRender(parameters =>
+            parameters.Add(x => x.TargetState, States.One));
+
+        var contents = cut.FindComponents<AnimatedVisibility>();
+
+        contents.Count.ShouldBe(2);
+
+        var oldContent = contents[1];
+
+        counters.GetAndIncreaseRenders();
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {EnterBase.GetFinishClasses()}"
+                        style="{EnterBase.GetFinishStyle()}">
+                    {SampleContentText(States.One)}
+                </div>
+                <div class="animated-visibility animated-content-item {ExitBase.GetFinishClasses()}"
+                        style="{ExitBase.GetFinishStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+            </div>
+            """);
+
+        var waitForRerender = CreateCompletionAwaiter(
+            customTimeout: TimeSpan.FromSeconds(1));
+
+        cut.OnMarkupUpdated += AssertElementRemoval;
+        void AssertElementRemoval(object? sender, object args)
+        {
+            cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {EnterBase.GetFinishClasses()}"
+                            style="{EnterBase.GetFinishStyle()}">
+                        {SampleContentText(States.One)}
+                    </div>
+                </div>
+                """);
+            cut.OnMarkupUpdated -= AssertElementRemoval;
+            waitForRerender.MarkAsFinished();
+        }
+        TimerService.SetResultForAwaitingTimers(oldContent.Instance, Fakes.FakeTimerService.TimerAction.Act);
+
+        await waitForRerender.WaitForFinish();
+    }
+
+
+    [Fact]
+    public async Task When_StatesHaveSpecificTransition_Then_ShouldExpectThoseTransitions()
+    {
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.NewStateOnTop, true)
+                .Add(x => x.TransitionsProvider, TransitionsProvider)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        AnimatedContent<States>.InterstateTransitions? TransitionsProvider(AnimatedContent<States>.StateChange stateChange)
+        {
+            if (stateChange.Source is States.Zero || stateChange.Target is States.One)
+                return new AnimatedContent<States>.InterstateTransitions
+                {
+                    TargetEnter = _enter2,
+                    SourceExit = _exit
+                };
+            if (stateChange.Source is States.One || stateChange.Target is States.Zero)
+                return new AnimatedContent<States>.InterstateTransitions
+                {
+                    TargetEnter = _enter,
+                    SourceExit = _exit2
+                };
+            return null;
+        }
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                        style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+            </div>
+            """);
+
+        cut.SetParametersAndRender(
+            parameters => parameters
+                .Add(x => x.TargetState, States.One));
+
+        var contents = cut.FindComponents<AnimatedVisibility>();
+
+        contents.Count.ShouldBe(2);
+
+        var oldContent = contents[0];
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {ExitBase.GetFinishClasses()}"
+                        style="{ExitBase.GetFinishStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+                <div class="animated-visibility animated-content-item {Enter2Base.GetFinishClasses()}"
+                        style="{Enter2Base.GetFinishStyle()}">
+                    {SampleContentText(States.One)}
+                </div>
+            </div>
+            """);
+
+
+        var waitForRerender = CreateCompletionAwaiter();
+        cut.OnAfterRender += AssertElementRemoval;
+        void AssertElementRemoval(object? sender, object args)
+        {
+            cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {Enter2Base.GetFinishClasses()}"
+                            style="{Enter2Base.GetFinishStyle()}">
+                        {SampleContentText(States.One)}
+                    </div>
+                </div>
+                """);
+            cut.OnAfterRender -= AssertElementRemoval;
+            waitForRerender.MarkAsFinished();
+        }
+        TimerService.SetResultForAwaitingTimers(oldContent.Instance, Fakes.FakeTimerService.TimerAction.Act);
+
+        await waitForRerender.WaitForFinish();
+    }
+
+    /// <summary>
+    /// Check to make sure manual rendering control doesn't break basic functionality
+    /// </summary>
+    [Fact]
+    public void When_ContentUpdates_Then_ComponentShouldRerender()
+    {
+        var testComponent = RenderComponent<AnimatedContent.ContentUpdatesCase>(
+            parameters => parameters
+                .Add(x => x.InnerContent, "start"));
+
+        var cut = testComponent.FindComponent<AnimatedContent<States>>();
+
+        cut.ShouldNotBeNull();
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                        style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                    start
+                </div>
+            </div>
+            """);
+
+        testComponent.SetParametersAndRender(
+            parameters => parameters
+                .Add(x => x.InnerContent, "end"));
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                        style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                    end
+                </div>
+            </div>
+            """);
+    }
+
+    private class Counters
+    {
+        public int Renders { get; private set; } = 0;
+        public int TransitionsCalcsThisRender { get; private set; } = 0;
+
+        public int GetAndIncreaseRenders()
+        {
+            TransitionsCalcsThisRender = 0;
+            return Renders++;
+        }
+
+        public int GetAndIncreaseTransitionsCalcsThisRender()
+            => TransitionsCalcsThisRender++;
+    }
+}

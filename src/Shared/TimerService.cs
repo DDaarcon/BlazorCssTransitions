@@ -4,7 +4,7 @@ namespace BlazorCssTransitions.Shared;
 
 internal interface ITimerService
 {
-    ITimerRegistration? StartNew(TimeSpan waitTime, Action actionToExecute, ITimerRegistration? oldRegistration = null);
+    ITimerRegistration? StartNew(TimeSpan waitTime, Action actionToExecute, object? caller, ITimerRegistration? oldRegistration = null);
 
     interface ITimerRegistration
     {
@@ -14,7 +14,7 @@ internal interface ITimerService
 
 internal class TimerService : ITimerService
 {
-    public ITimerRegistration? StartNew(TimeSpan waitTime, Action actionToExecute, ITimerRegistration? oldRegistration = default)
+    public ITimerRegistration? StartNew(TimeSpan waitTime, Action actionToExecute, object? caller, ITimerRegistration? oldRegistration = default)
     {
         if (waitTime <= TimeSpan.Zero)
         {
