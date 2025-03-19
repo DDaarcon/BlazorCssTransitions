@@ -66,10 +66,8 @@ public partial class AnimatedVisibilityTests
     [Fact]
     public async Task When_VisibleElementWithRemoveFromDOMWhenHiddenIsRendered_Then_ShouldRenderInSpecificWay()
     {
-        var waitForCompletion = CreateCompletionAwaiter(DebugTimeout);
+        var waitForCompletion = CreateCompletionAwaiter();
         int markupChangesCount = 0;
-
-        var enter = (BaseTransition)EnterTransition.FadeIn(Spec.Linear500ms);
 
         IRenderedComponent<ArtificalContainer> container = null!;
         (container, var cut) = RenderComponentInArtificalContainerForImmediateRerendersAnalysis<AnimatedVisibility>(
@@ -111,6 +109,103 @@ public partial class AnimatedVisibilityTests
                         // finish of fade in transition
                         container.MarkupMatches($"""
                             <div class="animated-visibility {ExitBase.GetInitialClasses()}" style="{ExitBase.GetInitialStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        cut!.SetParametersAndRender(
+                            parameters => parameters
+                                .Add(x => x.Visible, false));
+                        break;
+                    case 4:
+                        // start of fade out transition
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {ExitBase.GetFinishClasses()}" style="{ExitBase.GetFinishStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        TimerService.SetResultForAllAwaitingTimers(FakeTimerService.TimerAction.Act);
+                        break;
+                    case 5:
+                        // finish of fade out transition - do not render anything
+                        container.MarkupMatches("");
+                        waitForCompletion.MarkAsFinished();
+                        break;
+                }
+            });
+
+        await waitForCompletion.WaitForFinish();
+    }
+
+    [Fact]
+    public async Task When_VisibleElementWithDisappearWhenHiddenIsRendered_Then_ShouldRenderInSpecificWay()
+    {
+        var waitForCompletion = CreateCompletionAwaiter();
+        int markupChangesCount = 0;
+
+        IRenderedComponent<ArtificalContainer> container = null!;
+        (container, var cut) = RenderComponentInArtificalContainerForImmediateRerendersAnalysis<AnimatedVisibility>(
+            parameters => parameters
+                .Add(x => x.Visible, false)
+                .Add(x => x.DisappearWhenHidden, true)
+                .Add(x => x.Enter, _enter)
+                .Add(x => x.Exit, _exit)
+                .AddChildContent(SampleContent()),
+            onMarkupUpdated: (container, cut) =>
+            {
+                switch (markupChangesCount++)
+                {
+                    case 0:
+                        // initial render - render disappeared
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility disappeared {EnterBase.GetInitialClasses()}" style="{EnterBase.GetInitialStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+
+                        cut!.SetParametersAndRender(parameters => parameters
+                            .Add(x => x.Visible, true));
+                        break;
+                    case 1:
+                        // first actual render - set up as hidden
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {EnterBase.GetInitialClasses()}" style="{EnterBase.GetInitialStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        break;
+                    case 2:
+                        // start of fade in transition
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {EnterBase.GetFinishClasses()}" style="{EnterBase.GetFinishStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        TimerService.SetResultForAllAwaitingTimers(FakeTimerService.TimerAction.Act);
+                        break;
+                    case 3:
+                        // finish of fade in transition
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {ExitBase.GetInitialClasses()}" style="{ExitBase.GetInitialStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        cut!.SetParametersAndRender(
+                            parameters => parameters
+                                .Add(x => x.Visible, false));
+                        break;
+                    case 4:
+                        // start of fade out transition
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {ExitBase.GetFinishClasses()}" style="{ExitBase.GetFinishStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        TimerService.SetResultForAllAwaitingTimers(FakeTimerService.TimerAction.Act);
+                        break;
+                    case 5:
+                        // finish of fade out transition - render disappeared
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility disappeared {EnterBase.GetInitialClasses()}" style="{EnterBase.GetInitialStyle()}">
                                 {SampleContentText}
                             </div>
                             """);

@@ -13,44 +13,80 @@ public partial class AnimatedVisibility : IDisposable
     [Inject]
     private ITimerService _timerService { get; init; } = default!;
 
-
+    /// <summary>
+    /// Visibility status
+    /// </summary>
     [Parameter, EditorRequired]
     public required bool Visible { get; set; }
 
+    /// <summary>
+    /// Whether initial render should trigger showing/hiding transition
+    /// </summary>
     [Parameter]
     public bool StartWithTransition { get; set; }
 
     [Parameter, EditorRequired]
     public required RenderFragment ChildContent { get; set; }
 
+    /// <summary>
+    /// Style of container
+    /// </summary>
     [Parameter]
     public string? Style { get; set; }
 
+    /// <summary>
+    /// Css classes of container
+    /// </summary>
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// Enter transition
+    /// </summary>
     [Parameter]
     public EnterTransition? Enter { get; set; }
     private BaseTransition _enter = default!;
     internal static readonly EnterTransition _defaultEnter = EnterTransition.FadeIn();
 
+    /// <summary>
+    /// Exit transition
+    /// </summary>
     [Parameter]
     public ExitTransition? Exit { get; set; }
     private BaseTransition _exit = default!;
     internal static readonly ExitTransition _defaultExit = ExitTransition.FadeOut();
 
+    /// <summary>
+    /// Event triggered when enter transition finishes
+    /// </summary>
     [Parameter]
     public EventCallback OnShown { get; set; }
 
+    /// <summary>
+    /// Event triggered when exit transition finishes
+    /// </summary>
     [Parameter]
     public EventCallback OnHidden { get; set; }
 
+    /// <summary>
+    /// Event triggered when visibility state changes
+    /// </summary>
     [Parameter]
     public EventCallback<State> OnStateChanged { get; set; }
 
+    /// <summary>
+    /// Whether container with its content should be removed from DOM when state is equal to <see cref="State.Hidden"/>.
+    /// Keep in mind that removed elements will be disposed (their state will be lost).
+    /// </summary>
     [Parameter]
     public bool RemoveFromDOMWhenHidden { get; set; }
 
+    /// <summary>
+    /// Whether container should disappear (display: none) when state is equal to <see cref="State.Hidden"/>.
+    /// Has lower importance than <see cref="RemoveFromDOMWhenHidden"/>, so if both parameters are present, container will be removed rather than disappeared.
+    /// </summary>
+    [Parameter]
+    public bool DisappearWhenHidden { get; set; }
 
     public enum State
     {
@@ -65,8 +101,10 @@ public partial class AnimatedVisibility : IDisposable
     private State _currentState;
     private bool _isAfterInitialParametersSet;
     private bool _isCurrentRenderAddingContainerToDOM;
+    private bool _isApperingRequested;
 
     private bool ShouldNotRenderAnything { get; set; }
+    private bool ShouldRenderDisappeared { get; set; }
 
     private ElementReference _containerElement { get; set; }
 
@@ -85,12 +123,26 @@ public partial class AnimatedVisibility : IDisposable
 
         _isAfterInitialParametersSet = false;
 
-        _isCurrentRenderAddingContainerToDOM = 
-            !RemoveFromDOMWhenHidden // always start with rendering if RemoveFromDOMWhenHidden is false
-            || Visible // even if RFDWH is true, visible should be rendered
-            || StartWithTransition; // even if not visible, render when starts from transition to be hidden
+        _isCurrentRenderAddingContainerToDOM =
+            // always start with rendering if RemoveFromDOMWhenHidden is disabled
+            !RemoveFromDOMWhenHidden
+            // even if RFDWH is true, visible should be rendered
+            || Visible
+            // even if not visible, render when starts from transition to be hidden
+            || StartWithTransition;
 
         ShouldNotRenderAnything = !_isCurrentRenderAddingContainerToDOM;
+
+        ShouldRenderDisappeared =
+            // ignore everything else if RemoveFromDOMWhenHidden is enabled (that option takes precedence)
+            !RemoveFromDOMWhenHidden
+            // render disabled only if that functionality is enabled
+            && DisappearWhenHidden
+            // applicable only if element should be hidden
+            && !Visible
+            // element will start as visible, even if Visible is false, when starting from transition to visible
+            && !StartWithTransition;
+
     }
 
     protected override async Task OnParametersSetAsync()
@@ -106,9 +158,19 @@ public partial class AnimatedVisibility : IDisposable
             && Visible)
         {
             // when element removed from DOM should become visible
-            // state should be Hidden
+            // we expect _currentState to be Hidden
             ShouldNotRenderAnything = false;
             _isCurrentRenderAddingContainerToDOM = true;
+            return;
+        }
+
+        if (ShouldRenderDisappeared
+            && Visible)
+        {
+            // when disappeared element should become visible
+            // we expect _currentState to be Hidden
+            ShouldRenderDisappeared = false;
+            _isApperingRequested = true;
             return;
         }
 
@@ -128,9 +190,10 @@ public partial class AnimatedVisibility : IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (ShouldRerenderAfterAddingContainerToDOM(firstRender))
+        if (CheckIfShouldRerender(firstRender))
         {
             _isCurrentRenderAddingContainerToDOM = false;
+            _isApperingRequested = false;
             await _cssStylesAppliedValidator.EnsureStylesWereApplied(_containerElement);
 
             await SetIntermediateState();
@@ -138,13 +201,17 @@ public partial class AnimatedVisibility : IDisposable
         }
     }
 
-    private bool ShouldRerenderAfterAddingContainerToDOM(bool firstRender)
+    private bool CheckIfShouldRerender(bool firstRender)
     {
-        if (!_isCurrentRenderAddingContainerToDOM)
+        bool isEitherJustAddedOrJustAppeared
+            = _isCurrentRenderAddingContainerToDOM || _isApperingRequested;
+
+        if (!isEitherJustAddedOrJustAppeared)
             return false;
 
         return (firstRender && StartWithTransition)
-            || RemoveFromDOMWhenHidden;
+            || RemoveFromDOMWhenHidden
+            || DisappearWhenHidden;
     }
 
     private async Task SetIntermediateState()
@@ -236,9 +303,11 @@ public partial class AnimatedVisibility : IDisposable
 
 
     private const string _containerClass = "animated-visibility";
+    private const string _disappearedContainerClass = "disappeared";
 
     private string GetContainerClasses()
     {
+        // TODO benchmark
         IEnumerable<string> classes = [
             _containerClass,
             _currentState switch
@@ -253,6 +322,9 @@ public partial class AnimatedVisibility : IDisposable
 
         if (!String.IsNullOrEmpty(Class))
             classes = classes.Append(Class);
+
+        if (ShouldRenderDisappeared)
+            classes = classes.Append(_disappearedContainerClass);
 
         return String.Join(" ", classes);
     }

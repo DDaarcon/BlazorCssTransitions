@@ -6,6 +6,6 @@ export function ensureStylesWereApplied(element) {
     if (!element)
         return;
 
-    // Force reflow to ensure styles apply before adding the class
+    // Force reflow to ensure styles were applied
     element.offsetHeight;
 }
