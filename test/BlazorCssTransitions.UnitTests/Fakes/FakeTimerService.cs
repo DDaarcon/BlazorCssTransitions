@@ -6,7 +6,7 @@ internal class FakeTimerService : ITimerService
 {
     private readonly TimerService _realService = new();
 
-    public void SetResultForAllAwaitingTimers(TimerAction action)
+    public void SetResultForAllAwaitingTimers(TimerAction action = TimerAction.Act)
     {
         using (_lock.EnterScope())
         {
@@ -19,7 +19,7 @@ internal class FakeTimerService : ITimerService
         }
     }
 
-    public void SetResultForAwaitingTimers(object? caller, TimerAction action)
+    public void SetResultForAwaitingTimers(object? caller, TimerAction action = TimerAction.Act)
     {
         using (_lock.EnterScope())
         {

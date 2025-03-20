@@ -1,0 +1,15 @@
+﻿
+<span>@(State.ToString())</span>
+
+@code {
+    [Inject]
+    private SimpleElementsInitializationCounterService _counterService { get; init; } = default!;
+
+    [Parameter]
+    public AnimatedContentTests.States State { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _counterService.OnInitialized();
+    }
+}

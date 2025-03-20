@@ -45,6 +45,8 @@ public partial class AnimatedContent<TState>
     [Parameter]
     public EventCallback<TState?> OnContentChanged { get; set; }
 
+
+
     /// <summary>
     /// Css styles for content container.
     /// </summary>
@@ -79,6 +81,13 @@ public partial class AnimatedContent<TState>
     /// </summary>
     [Parameter]
     public bool ReassignTransitionsOnEachUpdate { get; set; }
+
+    /// <summary>
+    /// Hidden elements will stay rendered (their state will not be lost).
+    /// Keeping too many elements might negatively impact performance.
+    /// </summary>
+    [Parameter]
+    public bool PreserveHiddenElements { get; set; }
 
     /// <summary>
     /// States for transition
@@ -117,35 +126,53 @@ public partial class AnimatedContent<TState>
 
     private StateData? _targetStateData;
     private readonly List<StateData> _pastStatesData = new();
-    private int _currentStateKey = 0;
+    private int _currentStateKey = 1; // start counting from 1 to not use default value
     private bool _hasInitialTargetStateBeenShown = false;
-
-
-    public override Task SetParametersAsync(ParameterView parameters)
-    {
-        var childContent = parameters.GetValueOrDefault<RenderFragment<TState?>>(nameof(ChildContent));
-        return base.SetParametersAsync(parameters);
-    }
-
 
     protected override void OnParametersSet()
     {
         if (!_targetStateData.HasValue || !EqualityComparer<TState>.Default.Equals(_targetStateData.Value.State, TargetState))
         {
-            if (_targetStateData.HasValue)
-            {
-                // add previous target to past states
-                _pastStatesData.Add(_targetStateData.Value);
-            }
+            ApplyNewTargetState();
+        }
 
+        _shouldRerender = true;
+    }
+
+    private void ApplyNewTargetState()
+    {
+        if (_targetStateData.HasValue)
+        {
+            // add previous target to past states
+            _pastStatesData.Add(_targetStateData.Value);
+        }
+
+        if (!PreserveHiddenElements)
+        {
+            CreateNewTargetStateData();
+            return;
+        }
+
+        var indexInPastStates = _pastStatesData.FindIndex(x => EqualityComparer<TState>.Default.Equals(x.State, TargetState));
+
+        if (indexInPastStates == -1)
+        {
+            CreateNewTargetStateData();
+            return;
+        }
+
+        _targetStateData = _pastStatesData[indexInPastStates];
+        _pastStatesData.RemoveAt(indexInPastStates);
+        _targetStateData.Value.Reset();
+
+        void CreateNewTargetStateData()
+        {
             _targetStateData = new StateData
             {
                 Key = _currentStateKey++,
                 State = TargetState
             };
         }
-
-        _shouldRerender = true;
     }
 
 
@@ -172,8 +199,11 @@ public partial class AnimatedContent<TState>
 
     private void OnPastStateElementWasHidden(StateData pastState)
     {
-        _pastStatesData.Remove(pastState);
-        _shouldRerender = true;
+        if (!PreserveHiddenElements)
+        {
+            _pastStatesData.Remove(pastState);
+            _shouldRerender = true;
+        }
     }
 
     private string ContainerStyles
@@ -213,6 +243,14 @@ public partial class AnimatedContent<TState>
         {
             IsExitCached = true;
             CachedExit = exit;
+        }
+
+        public void Reset()
+        {
+            CachedEnter = null;
+            IsEnterCached = false;
+            CachedExit = null;
+            IsExitCached = false;
         }
     }
 

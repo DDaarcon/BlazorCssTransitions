@@ -1,4 +1,5 @@
-﻿
+﻿@using BlazorCssTransitions.UnitTests.Tests.AnimatedContent
+
 @inherits BCTTestContext
 
 @code {
@@ -7,4 +8,8 @@
 
     private string SampleContentText(States state)
         => $"<span>{state}</span>";
+
+
+    private RenderFragment<States> SampleCountableContent()
+        => state => @<SimpleElementForLifespanTesting State=@state />;
 }

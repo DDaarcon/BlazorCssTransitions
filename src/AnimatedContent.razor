@@ -35,6 +35,7 @@
                                             OnShown=@(parameters.OnShown)
                                             Class="animated-content-item"
                                             Style=@(KeepContentInBounds ? _keepContentInBoundsStyle : null)
+                                            DisappearWhenHidden=@PreserveHiddenElements
                                             @key=@(parameters.Key)>
                             @(parameters.Fragment)
                         </AnimatedVisibility>
@@ -55,6 +56,7 @@
                                         OnShown=@(parameters.OnShown)
                                         Class="animated-content-item"
                                         Style=@(KeepContentInBounds ? _keepContentInBoundsStyle : null)
+                                        DisappearWhenHidden=@PreserveHiddenElements
                                         @key=@(parameters.Key)>
                         @(parameters.Fragment)
                     </AnimatedVisibility>

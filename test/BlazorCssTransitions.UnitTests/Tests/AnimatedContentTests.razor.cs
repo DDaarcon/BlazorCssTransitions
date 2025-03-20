@@ -1,5 +1,7 @@
 ﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
+using BlazorCssTransitions.UnitTests.Tests.AnimatedContent;
 using Bunit;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace BlazorCssTransitions.UnitTests.Tests;
@@ -25,12 +27,21 @@ public partial class AnimatedContentTests
     internal static BaseTransition DefaultAnimatedVisibilityEnterBase => (BaseTransition)AnimatedVisibility._defaultEnter;
     internal static BaseTransition DefaultAnimatedVisibilityExitBase => (BaseTransition)AnimatedVisibility._defaultExit;
 
-    internal enum States
+    public enum States
     {
         Zero,
         One,
         Two
     }
+
+    protected override Task OnTestSetup()
+    {
+        Services.AddSingleton<SimpleElementsInitializationCounterService>();
+
+        return base.OnTestSetup();
+    }
+
+    private SimpleElementsInitializationCounterService SimpleElementsInitializationCounter => Services.GetRequiredService<SimpleElementsInitializationCounterService>();
 
     [Fact]
     public async Task When_StateSwitches_Then_ShouldRenderInSpecificWay()
@@ -199,16 +210,18 @@ public partial class AnimatedContentTests
         cut.OnAfterRender += AssertElementRemoval;
         void AssertElementRemoval(object? sender, object args)
         {
-            cut.MarkupMatches($"""
-                <div class="animated-content" style="">
-                    <div class="animated-visibility animated-content-item {Enter2Base.GetFinishClasses()}"
-                            style="{Enter2Base.GetFinishStyle()}">
-                        {SampleContentText(States.One)}
+            waitForRerender.ActAndMarkAsFinished(() =>
+            {
+                cut.MarkupMatches($"""
+                    <div class="animated-content" style="">
+                        <div class="animated-visibility animated-content-item {Enter2Base.GetFinishClasses()}"
+                                style="{Enter2Base.GetFinishStyle()}">
+                            {SampleContentText(States.One)}
+                        </div>
                     </div>
-                </div>
-                """);
-            cut.OnAfterRender -= AssertElementRemoval;
-            waitForRerender.MarkAsFinished();
+                    """);
+                cut.OnAfterRender -= AssertElementRemoval;
+            });
         }
         TimerService.SetResultForAwaitingTimers(oldContent.Instance, Fakes.FakeTimerService.TimerAction.Act);
 
@@ -250,6 +263,105 @@ public partial class AnimatedContentTests
                 </div>
             </div>
             """);
+    }
+
+
+
+    [Fact]
+    public async Task When_PreserveHiddenElementsIsSet_Then_ShouldKeepHiddenElementsRendered()
+    {
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.NewStateOnTop, true)
+                .Add(x => x.PreserveHiddenElements, true)
+                .Add(x => x.SharedEnter, _enter)
+                .Add(x => x.SharedExit, _exit)
+                .Add(x => x.ChildContent, SampleCountableContent()));
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                        style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+            </div>
+            """);
+
+        SimpleElementsInitializationCounter.Count.ShouldBe(1);
+
+        cut.SetParametersAndRender(
+            parameters => parameters
+                .Add(x => x.TargetState, States.One));
+
+        var contents = cut.FindComponents<AnimatedVisibility>();
+
+        contents.Count.ShouldBe(2);
+
+        var zeroContent = contents[0];
+        var oneContent = contents[1];
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {ExitBase.GetFinishClasses()}"
+                        style="{ExitBase.GetFinishStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+                <div class="animated-visibility animated-content-item {EnterBase.GetFinishClasses()}"
+                        style="{EnterBase.GetFinishStyle()}">
+                    {SampleContentText(States.One)}
+                </div>
+            </div>
+            """);
+
+        SimpleElementsInitializationCounter.Count.ShouldBe(2);
+
+        var waitForRerender = CreateCompletionAwaiter();
+        cut.OnAfterRender += AssertElementRemoval;
+        void AssertElementRemoval(object? sender, object args)
+        {
+            waitForRerender.ActAndMarkAsFinished(() =>
+            {
+                cut.MarkupMatches($"""
+                    <div class="animated-content" style="">
+                        <div class="animated-visibility disappeared animated-content-item {EnterBase.GetInitialClasses()}"
+                                style="{EnterBase.GetInitialStyle()}">
+                            {SampleContentText(States.Zero)}
+                        </div>
+                        <div class="animated-visibility animated-content-item {EnterBase.GetFinishClasses()}"
+                                style="{EnterBase.GetFinishStyle()}">
+                            {SampleContentText(States.One)}
+                        </div>
+                    </div>
+                    """);
+                cut.OnAfterRender -= AssertElementRemoval;
+            });
+        }
+        TimerService.SetResultForAwaitingTimers(zeroContent.Instance);
+
+        await waitForRerender.WaitForFinish();
+
+        SimpleElementsInitializationCounter.Count.ShouldBe(2);
+
+        TimerService.SetResultForAwaitingTimers(oneContent.Instance);
+        cut.SetParametersAndRender(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero));
+
+        cut.MarkupMatches($"""
+            <div class="animated-content" style="">
+                <div class="animated-visibility animated-content-item {ExitBase.GetFinishClasses()}"
+                        style="{ExitBase.GetFinishStyle()}">
+                    {SampleContentText(States.One)}
+                </div>
+                <div class="animated-visibility animated-content-item {EnterBase.GetFinishClasses()}"
+                        style="{EnterBase.GetFinishStyle()}">
+                    {SampleContentText(States.Zero)}
+                </div>
+            </div>
+            """);
+
+        SimpleElementsInitializationCounter.Count.ShouldBe(2);
     }
 
     private class Counters

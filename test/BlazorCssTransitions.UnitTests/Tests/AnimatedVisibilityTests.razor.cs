@@ -13,7 +13,7 @@ public partial class AnimatedVisibilityTests
     private BaseTransition ExitBase => (BaseTransition)_exit;
 
     [Fact]
-    public async Task When_VisibleElementWithStartWithTransitionIsRendered_Then_ShouldRenderInSpecificWay()
+    public async Task When_StartWithTransitionIsSet_Then_ShouldRenderInSpecificWay()
     {
         var waitForCompletion = CreateCompletionAwaiter();
         int markupChangesCount = 0;
@@ -64,7 +64,7 @@ public partial class AnimatedVisibilityTests
     }
 
     [Fact]
-    public async Task When_VisibleElementWithRemoveFromDOMWhenHiddenIsRendered_Then_ShouldRenderInSpecificWay()
+    public async Task When_RemoveFromDOMWhenHiddenIsSet_Then_ShouldRenderInSpecificWay()
     {
         var waitForCompletion = CreateCompletionAwaiter();
         int markupChangesCount = 0;
@@ -137,7 +137,7 @@ public partial class AnimatedVisibilityTests
     }
 
     [Fact]
-    public async Task When_VisibleElementWithDisappearWhenHiddenIsRendered_Then_ShouldRenderInSpecificWay()
+    public async Task When_DisappearWhenHiddenIsSet_Then_ShouldRenderInSpecificWay()
     {
         int markupChangesCount = 0;
         var waitForCompletion = CreateCompletionAwaiter(

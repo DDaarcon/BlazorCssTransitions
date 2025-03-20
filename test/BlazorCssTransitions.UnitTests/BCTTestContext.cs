@@ -84,6 +84,35 @@ public class BCTTestContext : TestContext, IAsyncLifetime
                 return;
             source.SetResult();
         }
+
+        public async Task ActAndMarkAsFinished(Func<Task> action)
+        {
+            try
+            {
+                await action();
+            }
+            catch (Exception ex)
+            {
+                source.SetException(ex);
+                return;
+            }
+            MarkAsFinished();
+        }
+
+        public void ActAndMarkAsFinished(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                source.SetException(ex);
+                return;
+            }
+            MarkAsFinished();
+        }
+
         public async Task WaitForFinish()
             => await source.Task;
     }
