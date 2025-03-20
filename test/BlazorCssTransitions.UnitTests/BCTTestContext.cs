@@ -42,14 +42,32 @@ public class BCTTestContext : TestContext, IAsyncLifetime
     protected static readonly TimeSpan DebugTimeout = TimeSpan.FromHours(1);
 
 
-    protected TestCompletionAwaiter CreateCompletionAwaiter(TimeSpan? customTimeout = null, Func<Exception>? onTimeout = null)
+    protected TestCompletionAwaiter CreateCompletionAwaiter(TimeSpan? customTimeout = null, Action? onTimeout = null)
     {
         var completionAwaiter = new TaskCompletionSource();
 
         // normally tests should not take more than 10 sec
         var cancellationSource = new CancellationTokenSource(customTimeout ?? TimeSpan.FromSeconds(10));
-
-        cancellationSource.Token.Register(() => completionAwaiter.SetException(onTimeout?.Invoke() ?? new Exception("Test timeout")));
+        
+        cancellationSource.Token.Register(() =>
+        {
+            if (onTimeout is not null)
+            {
+                try
+                {
+                    onTimeout();
+                    completionAwaiter.SetCanceled();
+                }
+                catch (Exception ex)
+                {
+                    completionAwaiter.SetException(ex);
+                }
+            }
+            else
+            {
+                completionAwaiter.SetException(new Exception("Test timeout"));
+            }
+        });
 
         completionAwaiter.Task.ContinueWith(task => cancellationSource.Dispose());
 

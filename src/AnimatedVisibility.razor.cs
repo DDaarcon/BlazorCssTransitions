@@ -260,6 +260,11 @@ public partial class AnimatedVisibility : IDisposable
                 {
                     ShouldNotRenderAnything = true;
                 }
+                else if (_currentState is State.Hidden
+                    && DisappearWhenHidden)
+                {
+                    ShouldRenderDisappeared = true;
+                }
 
                 await NotifyAboutStateChange();
                 StateHasChanged();

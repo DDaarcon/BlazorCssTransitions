@@ -139,8 +139,9 @@ public partial class AnimatedVisibilityTests
     [Fact]
     public async Task When_VisibleElementWithDisappearWhenHiddenIsRendered_Then_ShouldRenderInSpecificWay()
     {
-        var waitForCompletion = CreateCompletionAwaiter();
         int markupChangesCount = 0;
+        var waitForCompletion = CreateCompletionAwaiter(
+            onTimeout: () => Assert.Fail($"Failed on {markupChangesCount}"));
 
         IRenderedComponent<ArtificalContainer> container = null!;
         (container, var cut) = RenderComponentInArtificalContainerForImmediateRerendersAnalysis<AnimatedVisibility>(
@@ -166,7 +167,7 @@ public partial class AnimatedVisibilityTests
                             .Add(x => x.Visible, true));
                         break;
                     case 1:
-                        // first actual render - set up as hidden
+                        // first render of appeared container - set up as hidden
                         container.MarkupMatches($"""
                             <div class="animated-visibility {EnterBase.GetInitialClasses()}" style="{EnterBase.GetInitialStyle()}">
                                 {SampleContentText}
