@@ -44,6 +44,189 @@ public partial class AnimatedContentTests
     private SimpleElementsInitializationCounterService SimpleElementsInitializationCounter => Services.GetRequiredService<SimpleElementsInitializationCounterService>();
 
     [Fact]
+    public async Task When_NewStateOnTopIsFalse_Then_ShouldRenderCorrectly()
+    {
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.NewStateOnTop, false)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                         style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                        {SampleContentText(States.Zero)}
+                    </div>
+                </div>
+                """);
+
+        cut.SetParametersAndRender(parameters => parameters.Add(x => x.TargetState, States.One));
+
+        cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityEnterBase.GetFinishClasses()}"
+                         style="{DefaultAnimatedVisibilityEnterBase.GetFinishStyle()}">
+                        {SampleContentText(States.One)}
+                    </div>
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetFinishClasses()}"
+                         style="{DefaultAnimatedVisibilityExitBase.GetFinishStyle()}">
+                        {SampleContentText(States.Zero)}
+                    </div>
+                </div>
+                """);
+    }
+
+    [Fact]
+    public async Task When_NewStateOnTopIsTrue_Then_ShouldRenderCorrectly()
+    {
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.NewStateOnTop, true)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                         style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()}">
+                        {SampleContentText(States.Zero)}
+                    </div>
+                </div>
+                """);
+
+        cut.SetParametersAndRender(parameters => parameters.Add(x => x.TargetState, States.One));
+
+        cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetFinishClasses()}"
+                         style="{DefaultAnimatedVisibilityExitBase.GetFinishStyle()}">
+                        {SampleContentText(States.Zero)}
+                    </div>
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityEnterBase.GetFinishClasses()}"
+                         style="{DefaultAnimatedVisibilityEnterBase.GetFinishStyle()}">
+                        {SampleContentText(States.One)}
+                    </div>
+                </div>
+                """);
+    }
+
+    [Fact]
+    public async Task When_EventsAreSet_Then_TheyShouldBeInvokedOnRightMoments()
+    {
+        var awaiter = CreateCompletionAwaiter(
+            onTimeout: () => Assert.Fail("Initial render should invoke TargetAppeared"));
+        var onAppear = () =>
+        {
+            awaiter.MarkAsFinished();
+        };
+        var onAppearing = () => { };
+        void OnAppear()
+        {
+            onAppear();
+        }
+        void OnAppearing()
+        {
+            onAppearing();
+        }
+
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.OnTargetStateAppeared, OnAppear)
+                .Add(x => x.OnTargetStateAppearing, OnAppearing)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        await awaiter.WaitForFinish();
+
+        awaiter = CreateCompletionAwaiter(
+            onTimeout: () => Assert.Fail("Changing state should invoke TargetAppearing"));
+        onAppear = () => { };
+        onAppearing = () =>
+        {
+            awaiter.MarkAsFinished();
+        };
+
+        cut.SetParametersAndRender(parameters => parameters.Add(x => x.TargetState, States.One));
+
+        await awaiter.WaitForFinish();
+
+        awaiter = CreateCompletionAwaiter(
+            onTimeout: () => Assert.Fail("TargetAppeared should have been invoked when target's appearing animation finishes"));
+        onAppear = () =>
+        {
+            awaiter.MarkAsFinished();
+        };
+        onAppearing = () => { };
+
+        TimerService.SetResultForAllAwaitingTimers();
+
+        await awaiter.WaitForFinish();
+    }
+
+    
+    [Fact]
+    public async Task When_StartWithTransitionAndOnAppearingEventIsSet_Then_ItShouldBeInvokedOnAtStart()
+    {
+        var awaiter = CreateCompletionAwaiter(
+            onTimeout: () => Assert.Fail("Initial render should invoke TargetAppearing"));
+        var onAppearing = () =>
+        {
+            awaiter.MarkAsFinished();
+        };
+        void OnAppearing()
+        {
+            onAppearing();
+        }
+
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.StartWithTransition, true)
+                .Add(x => x.OnTargetStateAppearing, OnAppearing)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        await awaiter.WaitForFinish();
+    }
+
+
+
+    [Fact]
+    public async Task When_KeepContentInBoundsIsTrue_Then_ShouldRenderCorrectly()
+    {
+        var cut = RenderComponent<AnimatedContent<States>>(
+            parameters => parameters
+                .Add(x => x.TargetState, States.Zero)
+                .Add(x => x.KeepContentInBounds, true)
+                .Add(x => x.ChildContent, SampleContent()));
+
+        cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetInitialClasses()}"
+                         style="{DefaultAnimatedVisibilityExitBase.GetInitialStyle()} min-height: 0;">
+                        {SampleContentText(States.Zero)}
+                    </div>
+                </div>
+                """);
+
+        cut.SetParametersAndRender(parameters => parameters.Add(x => x.TargetState, States.One));
+
+        cut.MarkupMatches($"""
+                <div class="animated-content" style="">
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityEnterBase.GetFinishClasses()}"
+                         style="{DefaultAnimatedVisibilityEnterBase.GetFinishStyle()} min-height: 0;">
+                        {SampleContentText(States.One)}
+                    </div>
+                    <div class="animated-visibility animated-content-item {DefaultAnimatedVisibilityExitBase.GetFinishClasses()}"
+                         style="{DefaultAnimatedVisibilityExitBase.GetFinishStyle()} min-height: 0;">
+                        {SampleContentText(States.Zero)}
+                    </div>
+                </div>
+                """);
+    }
+
+
+    [Fact]
     public async Task When_StateSwitches_Then_ShouldRenderInSpecificWay()
     {
         var counters = new Counters();

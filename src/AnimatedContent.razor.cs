@@ -34,17 +34,21 @@ public partial class AnimatedContent<TState>
     /// <summary>
     /// Initial content should appear with enter transition.
     /// </summary>
-    /// Do not rerender after change - applicable only at start
     [Parameter]
     public bool StartWithTransition { get; set; }
     
 
     /// <summary>
-    /// Callback for when target content is fully shown.
+    /// Event triggered when target content is fully shown.
     /// </summary>
     [Parameter]
-    public EventCallback<TState?> OnContentChanged { get; set; }
+    public EventCallback<TState?> OnTargetStateAppeared { get; set; }
 
+    /// <summary>
+    /// Event triggered when target content starts appearing animation.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TState?> OnTargetStateAppearing { get; set; }
 
 
     /// <summary>
@@ -90,10 +94,10 @@ public partial class AnimatedContent<TState>
     public bool PreserveHiddenElements { get; set; }
 
     /// <summary>
-    /// States for transition
+    /// States for transition.
     /// </summary>
-    /// <param name="Source">Source state, from which content transitions to target state</param>
-    /// <param name="Target">Target state, to which content transitions from source state</param>
+    /// <param name="Source">Source state, from which content transitions to target state.</param>
+    /// <param name="Target">Target state, to which content transitions from source state.</param>
     /// <param name="IsSourcePresent">Whether source state had been applied. Especially useful when dealing with value types.</param>
     public readonly record struct StateChange(
         TState? Source,
@@ -191,12 +195,6 @@ public partial class AnimatedContent<TState>
         return true;
     }
 
-
-    private async Task OnTargetStateElementWasShown()
-    {
-        await OnContentChanged.InvokeAsync(_targetStateData!.Value.State);
-    }
-
     private void OnPastStateElementWasHidden(StateData pastState)
     {
         if (!PreserveHiddenElements)
@@ -286,7 +284,7 @@ public partial class AnimatedContent<TState>
             Exit: null, // exit is not relevant for target state, it will be set when becomes past state
             StartWithTransition: StartWithTransition || _hasInitialTargetStateBeenShown,
             OnHidden: default,
-            OnShown: new EventCallback(this, () => OnTargetStateElementWasShown()),
+            OnStateChanged: new EventCallback<AnimatedVisibility.State>(this, OnTargetStateVisibilityStateChange),
             Key: _targetStateData.Value.Key,
             Fragment: targetStateCase.Fragment
         );
@@ -321,7 +319,7 @@ public partial class AnimatedContent<TState>
                     Exit: exit,
                     StartWithTransition: false,
                     OnHidden: new EventCallback(this, () => OnPastStateElementWasHidden(pastState)),
-                    OnShown: default,
+                    OnStateChanged: default,
                     Key: pastState.Key,
                     Fragment: pastStateCase.Fragment
                 );
@@ -362,13 +360,26 @@ public partial class AnimatedContent<TState>
         return (state.CachedEnter, state.CachedExit);
     }
 
+    private async Task OnTargetStateVisibilityStateChange(AnimatedVisibility.State visibilityState)
+    {
+        switch (visibilityState)
+        {
+            case AnimatedVisibility.State.Shown:
+                await OnTargetStateAppeared.InvokeAsync();
+                break;
+            case AnimatedVisibility.State.Showing:
+                await OnTargetStateAppearing.InvokeAsync();
+                break;
+        }
+    }
+
     private record AnimatedVisibilityParameters(
         bool Visible,
         EnterTransition? Enter,
         ExitTransition? Exit,
         bool StartWithTransition,
         EventCallback OnHidden,
-        EventCallback OnShown,
+        EventCallback<AnimatedVisibility.State> OnStateChanged,
         int Key,
         RenderFragment Fragment
     );

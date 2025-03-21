@@ -47,7 +47,7 @@ public class BCTTestContext : TestContext, IAsyncLifetime
         var completionAwaiter = new TaskCompletionSource();
 
         // normally tests should not take more than 10 sec
-        var cancellationSource = new CancellationTokenSource(customTimeout ?? TimeSpan.FromSeconds(10));
+        var cancellationSource = new CancellationTokenSource(customTimeout ?? TimeSpan.FromSeconds(5));
         
         cancellationSource.Token.Register(() =>
         {

@@ -29,19 +29,19 @@ public partial class AnimatedVisibility : IDisposable
     public required RenderFragment ChildContent { get; set; }
 
     /// <summary>
-    /// Style of container
+    /// Style of container.
     /// </summary>
     [Parameter]
     public string? Style { get; set; }
 
     /// <summary>
-    /// Css classes of container
+    /// Css classes of container.
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
 
     /// <summary>
-    /// Enter transition
+    /// Enter transition.
     /// </summary>
     [Parameter]
     public EnterTransition? Enter { get; set; }
@@ -49,7 +49,7 @@ public partial class AnimatedVisibility : IDisposable
     internal static readonly EnterTransition _defaultEnter = EnterTransition.FadeIn();
 
     /// <summary>
-    /// Exit transition
+    /// Exit transition.
     /// </summary>
     [Parameter]
     public ExitTransition? Exit { get; set; }
@@ -57,20 +57,24 @@ public partial class AnimatedVisibility : IDisposable
     internal static readonly ExitTransition _defaultExit = ExitTransition.FadeOut();
 
     /// <summary>
-    /// Event triggered when enter transition finishes
+    /// Event triggered when enter transition finishes.
     /// </summary>
     [Parameter]
     public EventCallback OnShown { get; set; }
 
     /// <summary>
-    /// Event triggered when exit transition finishes
+    /// Event triggered when exit transition finishes.
     /// </summary>
     [Parameter]
     public EventCallback OnHidden { get; set; }
 
     /// <summary>
-    /// Event triggered when visibility state changes
+    /// Event triggered when visibility state changes.
     /// </summary>
+    /// <remarks>
+    /// When <see cref="RemoveFromDOMWhenHidden"/> is enabled, state <see cref="State.Showing"/> is set when element is added to DOM.<br/>
+    /// When <see cref="DisappearWhenHidden"/> is enabled, state <see cref="State.Showing"/> is set when element appears.
+    /// </remarks>
     [Parameter]
     public EventCallback<State> OnStateChanged { get; set; }
 
