@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace BlazorCssTransitions;
 
-public partial class AnimatedVisibility : IDisposable
+public partial class AnimatedVisibility : IDisposable, IHandleEvent
 {
     [Inject]
     private ICssStylesAppliedValidator _cssStylesAppliedValidator { get; init; } = default!;
@@ -20,7 +20,7 @@ public partial class AnimatedVisibility : IDisposable
     public required bool Visible { get; set; }
 
     /// <summary>
-    /// Whether initial render should trigger showing/hiding transition
+    /// Whether the initial render should trigger showing/hiding transition
     /// </summary>
     [Parameter]
     public bool StartWithTransition { get; set; }
@@ -149,6 +149,13 @@ public partial class AnimatedVisibility : IDisposable
 
     }
 
+    // TODO verify if is required
+    Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? arg)
+    {
+        // do not handle any events
+        return Task.CompletedTask;
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         if (!_isAfterInitialParametersSet)
@@ -226,6 +233,10 @@ public partial class AnimatedVisibility : IDisposable
             return;
         }
 
+        // abort right away, to prevent race conditions when OnSetIntermediateState expects intermediate state
+        // but timer finishes and sets state to final
+        _transitionTimer?.Abort();
+
         var newState = Visible
             ? State.Showing
             : State.Hiding;
@@ -273,7 +284,9 @@ public partial class AnimatedVisibility : IDisposable
                 await NotifyAboutStateChange();
                 StateHasChanged();
             });
-        }, caller: this, oldRegistration: _transitionTimer);
+        },
+        caller: this,
+        oldRegistration: _transitionTimer /* should have been aborted just before, but it doesn't harm to do it again */);
     }
 
     private async Task NotifyAboutStateChange()

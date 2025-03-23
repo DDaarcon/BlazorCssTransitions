@@ -32,7 +32,7 @@ public partial class AnimatedContent<TState>
     public bool NewStateOnTop { get; set; }
 
     /// <summary>
-    /// Initial content should appear with enter transition.
+    /// Whether the initial content should appear with enter transition.
     /// </summary>
     [Parameter]
     public bool StartWithTransition { get; set; }
@@ -128,10 +128,14 @@ public partial class AnimatedContent<TState>
             };
     }
 
+    // TODO if we decide that it will be simpler to store animated visibility elements' parameters as a state
+    // it might be a good idea to each time crate new collection of parameters and only after they are fully created assign them to state field
+    // it might be also good to add a lock or a cancelation for previous creation request, when component's Parameters change once again
     private StateData? _targetStateData;
     private readonly List<StateData> _pastStatesData = new();
     private int _currentStateKey = 1; // start counting from 1 to not use default value
     private bool _hasInitialTargetStateBeenShown = false;
+    private bool _hasCurrentRenderMovedStates = false;
 
     protected override void OnParametersSet()
     {
@@ -147,8 +151,10 @@ public partial class AnimatedContent<TState>
     {
         if (_targetStateData.HasValue)
         {
-            // add previous target to past states
-            _pastStatesData.Add(_targetStateData.Value);
+            var currentTargetStateData = _targetStateData.Value;
+            if (PreserveHiddenElements)
+                currentTargetStateData.SetAsBeingMoved();
+            _pastStatesData.Add(currentTargetStateData);
         }
 
         if (!PreserveHiddenElements)
@@ -165,9 +171,10 @@ public partial class AnimatedContent<TState>
             return;
         }
 
-        _targetStateData = _pastStatesData[indexInPastStates];
+        var newTargetStateData = _pastStatesData[indexInPastStates];
         _pastStatesData.RemoveAt(indexInPastStates);
-        _targetStateData.Value.Reset();
+        newTargetStateData.SetAsBeingMoved();
+        _targetStateData = newTargetStateData;
 
         void CreateNewTargetStateData()
         {
@@ -183,6 +190,13 @@ public partial class AnimatedContent<TState>
     protected override void OnAfterRender(bool firstRender)
     {
         _hasInitialTargetStateBeenShown = true;
+
+        if (_hasCurrentRenderMovedStates)
+        {
+            _hasCurrentRenderMovedStates = false;
+            _shouldRerender = true;
+            StateHasChanged();
+        }
     }
 
     private bool _shouldRerender = false;
@@ -226,6 +240,8 @@ public partial class AnimatedContent<TState>
     {
         public required int Key { get; init; }
         public required TState? State { get; init; }
+        // for some reason, when previously rendered elements change their locaction, their css properties do not animate, just jump to target values
+        public bool IsBeingMoved { get; private set; }
 
         public bool IsEnterCached { get; private set; }
         public EnterTransition? CachedEnter { get; private set; }
@@ -243,12 +259,17 @@ public partial class AnimatedContent<TState>
             CachedExit = exit;
         }
 
-        public void Reset()
+        public void SetAsBeingMoved()
         {
+            IsBeingMoved = true;
             CachedEnter = null;
             IsEnterCached = false;
             CachedExit = null;
             IsExitCached = false;
+        }
+        public void SetAsMoved()
+        {
+            IsBeingMoved = false;
         }
     }
 
@@ -257,15 +278,18 @@ public partial class AnimatedContent<TState>
         if (!_targetStateData.HasValue)
             return [];
 
+        _hasCurrentRenderMovedStates = false;
+
         var paramsOfStatesToRender = new AnimatedVisibilityParameters[_pastStatesData.Count + 1];
 
-        var targetStateCase = GetStateCase(_targetStateData.Value.State);
+        var targetStateData = _targetStateData.Value;
+        var targetStateCase = GetStateCase(targetStateData.State);
 
         bool hasAnyPastStates = _pastStatesData.Count > 0;
 
         InterstateTransitions? targetTransitions = TransitionsProvider?.Invoke(new StateChange(
             Source: hasAnyPastStates ? _pastStatesData[^1].State : default,
-            Target: _targetStateData.Value.State,
+            Target: targetStateData.State,
             IsSourcePresent: hasAnyPastStates));
 
         EnterTransition? enter = null;
@@ -275,20 +299,29 @@ public partial class AnimatedContent<TState>
 
         if (!ReassignTransitionsOnEachUpdate)
         {
-            _targetStateData.Value.CacheEnter(enter);
+            targetStateData.CacheEnter(enter);
+        }
+
+        bool targetVisibility = true;
+        if (targetStateData.IsBeingMoved)
+        {
+            targetVisibility = false;
+            _hasCurrentRenderMovedStates = true;
+            targetStateData.SetAsMoved();
         }
 
         paramsOfStatesToRender[0] = new AnimatedVisibilityParameters(
-            Visible: true,
+            Visible: targetVisibility,
             Enter: enter,
             Exit: null, // exit is not relevant for target state, it will be set when becomes past state
             StartWithTransition: StartWithTransition || _hasInitialTargetStateBeenShown,
             OnHidden: default,
             OnStateChanged: new EventCallback<AnimatedVisibility.State>(this, OnTargetStateVisibilityStateChange),
-            Key: _targetStateData.Value.Key,
+            Key: targetStateData.Key,
             Fragment: targetStateCase.Fragment
         );
 
+        _targetStateData = targetStateData;
 
         if (_pastStatesData.Count > 0)
         {
@@ -296,8 +329,8 @@ public partial class AnimatedContent<TState>
 
             for (int pastStateIndexFromEnd = 1; pastStateIndexFromEnd <= _pastStatesData.Count; pastStateIndexFromEnd++)
             {
-                var pastState = _pastStatesData[^pastStateIndexFromEnd];
-                var pastStateCase = GetStateCase(pastState.State);
+                var pastStateData = _pastStatesData[^pastStateIndexFromEnd];
+                var pastStateCase = GetStateCase(pastStateData.State);
 
                 bool hasEarlierState = pastStateIndexFromEnd + 1 <= _pastStatesData.Count;
 
@@ -309,23 +342,33 @@ public partial class AnimatedContent<TState>
                     IsSourcePresent: hasEarlierState));
 
                 (enter, exit) = GetProperTransitionsForPastStateAndCacheIfRequired(
-                    state: pastState,
+                    state: ref pastStateData,
                     calculatedEnter: fromOlderToProcessedStateTranstions?.TargetEnter ?? pastStateCase.Enter ?? SharedEnter,
                     calculatedExit: fromProcessedToNewerStateTransitions?.SourceExit ?? pastStateCase.Exit ?? SharedExit);
 
+                bool visibility = false;
+                if (pastStateData.IsBeingMoved)
+                {
+                    visibility = true;
+                    _hasCurrentRenderMovedStates = true;
+                    pastStateData.SetAsMoved();
+                }
+
                 paramsOfStatesToRender[pastStateIndexFromEnd] = new AnimatedVisibilityParameters(
-                    Visible: false,
+                    Visible: visibility,
                     Enter: enter,
                     Exit: exit,
                     StartWithTransition: false,
-                    OnHidden: new EventCallback(this, () => OnPastStateElementWasHidden(pastState)),
+                    OnHidden: new EventCallback(this, () => OnPastStateElementWasHidden(pastStateData)),
                     OnStateChanged: default,
-                    Key: pastState.Key,
+                    Key: pastStateData.Key,
                     Fragment: pastStateCase.Fragment
                 );
 
                 // when processing next (older) state we can reuse already found transitions (older becomes processed, processed becomes newer)
                 fromProcessedToNewerStateTransitions = fromOlderToProcessedStateTranstions;
+
+                _pastStatesData[^pastStateIndexFromEnd] = pastStateData;
             }
         }
 
@@ -344,7 +387,7 @@ public partial class AnimatedContent<TState>
     }
 
     private (EnterTransition?, ExitTransition?) GetProperTransitionsForPastStateAndCacheIfRequired(
-        StateData state,
+        ref StateData state,
         EnterTransition? calculatedEnter,
         ExitTransition? calculatedExit)
     {
@@ -365,10 +408,10 @@ public partial class AnimatedContent<TState>
         switch (visibilityState)
         {
             case AnimatedVisibility.State.Shown:
-                await OnTargetStateAppeared.InvokeAsync();
+                await OnTargetStateAppeared.InvokeAsync(TargetState);
                 break;
             case AnimatedVisibility.State.Showing:
-                await OnTargetStateAppearing.InvokeAsync();
+                await OnTargetStateAppearing.InvokeAsync(TargetState);
                 break;
         }
     }
