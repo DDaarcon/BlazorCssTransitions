@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
+// TOOD rename both namespace and service
 namespace BlazorCssTransitions.Shared.CssStylesValidation;
 
 internal interface ICssStylesAppliedValidator : IAsyncDisposable

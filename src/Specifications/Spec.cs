@@ -1,9 +1,4 @@
 ﻿using BlazorCssTransitions.Shared;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BlazorCssTransitions;
 
@@ -20,13 +15,13 @@ public partial class Spec
     internal string TimingFunction => Assertions.AssertNotNullAndGet(_timingFunction, "Transition's timing function must be set before transition is used.");
 
     /// <summary>
-    /// Returns: [animated-prop] [duration] [delay] [riming-func]
+    /// Returns: [animated-prop] [duration] [delay] [timing-func]
     /// </summary>
     internal virtual string GetTransitionValue(string animatedProperty)
         => $"{animatedProperty} {Duration.ToCssTime()} {Delay.ToCssTime()} {TimingFunction}";
 
     /// <summary>
-    /// Returns while property declaration for "transition"
+    /// Returns whole property declaration for "transition"
     /// </summary>
     internal string GetStyle(string animatedProperty)
     {
