@@ -1,4 +1,5 @@
-﻿
+﻿@using BlazorCssTransitions.AnimatedContentInternal
+
 @typeparam TState
 
 <div class=@ContainerClasses
@@ -14,53 +15,41 @@
 
 @code {
 
-    private const string _keepContentInBoundsStyle = "min-height: 0;";
-
     private RenderFragment RenderStates()
     {
-        var paramsOfStatesToRender = GetAnimatedVisibilityParametersForRender();
-
-        if (!NewStateOnTop)
-            return
-                @<text>
-                    @for (int stateIndex = 0; stateIndex < paramsOfStatesToRender.Length; stateIndex++)
-                    {
-                        var parameters = paramsOfStatesToRender[stateIndex];
-
-                        <AnimatedVisibility Visible=@(parameters.Visible)
-                                            Enter=@(parameters.Enter)
-                                            Exit=@(parameters.Exit)
-                                            StartWithTransition=@(parameters.StartWithTransition)
-                                            OnHidden=@(parameters.OnHidden)
-                                            OnStateChanged=@(parameters.OnStateChanged)
-                                            Class="animated-content-item"
-                                            Style=@(KeepContentInBounds ? _keepContentInBoundsStyle : null)
-                                            DisappearWhenHidden=@PreserveHiddenElements
-                                            @key=@(parameters.Key)>
-                            @(parameters.Fragment)
-                        </AnimatedVisibility>
-                    }
-                </text>;
+        var paramsOfStatesToRender = _elementsCollection.ListForRead(
+            fromTarget: !NewStateOnTop);
 
         return
             @<text>
-                @for (int stateIndex = paramsOfStatesToRender.Length - 1; stateIndex >= 0; stateIndex--)
+                @foreach (var parameters in paramsOfStatesToRender)
                 {
-                    var parameters = paramsOfStatesToRender[stateIndex];
-
                     <AnimatedVisibility Visible=@(parameters.Visible)
                                         Enter=@(parameters.Enter)
                                         Exit=@(parameters.Exit)
                                         StartWithTransition=@(parameters.StartWithTransition)
-                                        OnHidden=@(parameters.OnHidden)
                                         OnStateChanged=@(parameters.OnStateChanged)
                                         Class="animated-content-item"
-                                        Style=@(KeepContentInBounds ? _keepContentInBoundsStyle : null)
+                                        Style=@BuildStyleForElement(parameters)
                                         DisappearWhenHidden=@PreserveHiddenElements
                                         @key=@(parameters.Key)>
                         @(parameters.Fragment)
                     </AnimatedVisibility>
                 }
             </text>;
+    }
+
+    private const string _keepContentInBoundsStyle = "min-height: 0;";
+
+    private string BuildStyleForElement(StateElementsCollection<TState>.IElementForRead element)
+    {
+        string style = "";
+
+        if (KeepContentInBounds)
+            style += _keepContentInBoundsStyle;
+        if (PreserveHiddenElements)
+            style += $"z-index: {_elementsCollection.GetZIndexForElement(element, descendingFromTarget: NewStateOnTop)};";
+
+        return style;
     }
 }

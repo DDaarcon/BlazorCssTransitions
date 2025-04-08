@@ -1,5 +1,6 @@
 ﻿using BlazorCssTransitions.AnimatedVisibilityTransitions;
 using BlazorCssTransitions.UnitTests.Fakes;
+using BlazorCssTransitions.UnitTests.Other;
 using Bunit;
 
 namespace BlazorCssTransitions.UnitTests.Tests;
@@ -15,7 +16,7 @@ public partial class AnimatedVisibilityTests
     [Fact]
     public async Task When_StartWithTransitionIsSet_Then_ShouldRenderInSpecificWay()
     {
-        var waitForCompletion = CreateCompletionAwaiter();
+        var waitForCompletion = TestCompletionAwaiter.Create();
         int markupChangesCount = 0;
 
         IRenderedComponent<ArtificalContainer> container = null!;
@@ -66,7 +67,7 @@ public partial class AnimatedVisibilityTests
     [Fact]
     public async Task When_RemoveFromDOMWhenHiddenIsSet_Then_ShouldRenderInSpecificWay()
     {
-        var waitForCompletion = CreateCompletionAwaiter();
+        var waitForCompletion = TestCompletionAwaiter.Create();
         int markupChangesCount = 0;
 
         IRenderedComponent<ArtificalContainer> container = null!;
@@ -140,7 +141,7 @@ public partial class AnimatedVisibilityTests
     public async Task When_DisappearWhenHiddenIsSet_Then_ShouldRenderInSpecificWay()
     {
         int markupChangesCount = 0;
-        var waitForCompletion = CreateCompletionAwaiter(
+        var waitForCompletion = TestCompletionAwaiter.Create(
             onTimeout: () => Assert.Fail($"Failed on {markupChangesCount}"));
 
         IRenderedComponent<ArtificalContainer> container = null!;
