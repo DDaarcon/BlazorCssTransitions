@@ -138,6 +138,63 @@ public partial class AnimatedVisibilityTests
     }
 
     [Fact]
+    public async Task When_ChangingTransitionsOfAppearingElements_Then_TransitionShouldChange()
+    {
+        int markupChangesCount = 0;
+        var waitForCompletion = TestCompletionAwaiter.Create(
+            onTimeout: () => Assert.Fail($"Failed on {markupChangesCount}"));
+
+        var secondEnter = EnterTransition.SlideIn();
+        var secondEnterBase = (BaseTransition)secondEnter;
+
+        IRenderedComponent<ArtificalContainer> container = null!;
+        (container, var cut) = RenderComponentInArtificalContainerForImmediateRerendersAnalysis<AnimatedVisibility>(
+            parameters => parameters
+                .Add(x => x.Visible, false)
+                .Add(x => x.DisappearWhenHidden, true)
+                .Add(x => x.Enter, _enter)
+                .Add(x => x.Exit, _exit)
+                .AddChildContent(SampleContent()),
+            onMarkupUpdated: (container, cut) =>
+            {
+                switch (markupChangesCount++)
+                {
+                    case 0:
+                        // initial render - render disappeared
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility disappeared {EnterBase.GetInitialClasses()}" style="{EnterBase.GetInitialStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+
+                        cut!.SetParametersAndRender(parameters => parameters
+                            .Add(x => x.Visible, true)
+                            .Add(x => x.Enter, secondEnter));
+                        break;
+                    case 1:
+                        // first render of appeared container - set up as hidden
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {secondEnterBase.GetInitialClasses()}" style="{secondEnterBase.GetInitialStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        break;
+                    case 2:
+                        // start of fade in transition
+                        container.MarkupMatches($"""
+                            <div class="animated-visibility {secondEnterBase.GetFinishClasses()}" style="{secondEnterBase.GetFinishStyle()}">
+                                {SampleContentText}
+                            </div>
+                            """);
+                        waitForCompletion.MarkAsFinished();
+                        break;
+                }
+            });
+
+        await waitForCompletion.WaitForFinish();
+    }
+
+    [Fact]
     public async Task When_DisappearWhenHiddenIsSet_Then_ShouldRenderInSpecificWay()
     {
         int markupChangesCount = 0;

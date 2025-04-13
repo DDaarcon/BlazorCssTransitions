@@ -165,6 +165,17 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             return;
         }
 
+        if (Enter is null
+            || _enter != Enter)
+        {
+            _enter = (BaseTransition?)Enter ?? _enter;
+        }
+        if (Exit is null
+            || _exit != Exit)
+        {
+            _exit = (BaseTransition?)Exit ?? _exit;
+        }
+
         if (ShouldNotRenderAnything
             && Visible)
         {
@@ -183,17 +194,6 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             ShouldRenderDisappeared = false;
             _isApperingRequested = true;
             return;
-        }
-
-        if (Enter is null
-            || _enter != Enter)
-        {
-            _enter = (BaseTransition?)Enter ?? _enter;
-        }
-        if (Exit is null
-            || _exit != Exit)
-        {
-            _exit = (BaseTransition?)Exit ?? _exit;
         }
 
         await SetIntermediateState();
