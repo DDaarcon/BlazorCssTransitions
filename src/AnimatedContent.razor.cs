@@ -19,12 +19,9 @@ public partial class AnimatedContent<TState>
 
     [Parameter]
     public RenderFragment<TState?>? ChildContent { get; set; }
-    /// <summary>
-    /// Provides enter transition for appearing content and exit transition for disappearing content. <br />
-    /// It may be called even if transitons are already assigned and cached.
-    /// </summary>
+
     [Parameter]
-    public Func<StateChange, InterstateTransitions?>? TransitionsProvider { get; set; }
+    public Func<StatesChange, CurrentTransitions?>? TransitionsProvider { get; set; }
 
     /// <summary>
     /// Newer content should render above older one (later in DOM).
@@ -98,30 +95,36 @@ public partial class AnimatedContent<TState>
     public bool PreserveHiddenElements { get; init; }
     private bool _preserveHiddenElements;
 
+
     /// <summary>
-    /// States for transition.
+    /// Current and surrounding states.
     /// </summary>
-    /// <param name="SourceOrDefault">Source state, from which content transitions to target state. Might contain default value.</param>
-    /// <param name="Target">Target state, to which content transitions from source state.</param>
-    /// <param name="IsSourcePresent">Whether source state had been applied. Especially useful when dealing with value types.</param>
-    public readonly record struct StateChange(
-        TState? SourceOrDefault,
-        TState? Target,
-        bool IsSourcePresent = true)
+    /// <param name="Earlier">State, from which it is transitioned to the current. Further from the target.</param>
+    /// <param name="Current">State, for which transitions are being set.</param>
+    /// <param name="Later">Sate, to which it is transitioned from the current. Closer to the target.</param>
+    public readonly record struct StatesChange(
+        PossibleState Earlier,
+        TState? Current,
+        PossibleState Later);
+
+    /// <param name="Value">Assigned value or default.</param>
+    /// <param name="HasValue">Whether value has been assigned and do not contain default value.</param>
+    public readonly record struct PossibleState(
+        TState? Value,
+        bool HasValue)
     {
-        /// <summary>
-        /// Checks whether source has been assigned and equals to the provided value.
-        /// </summary>
-        public bool SourceEquals(TState? state)
-            => IsSourcePresent && CompareStates(SourceOrDefault, state);
+        public static implicit operator TState?(PossibleState @this)
+        {
+            if (!@this.HasValue)
+                throw new Exception("PossibleState structure does not have assigned state");
+            return @this.Value;
+        }
     }
 
-    public class InterstateTransitions
+    public class CurrentTransitions
     {
-        // TODO explanation
-        public EnterTransition? TargetEnter { get; init; }
-        // TODO explanation
-        public ExitTransition? SourceExit { get; init; }
+        public EnterTransition? Enter { get; init; }
+        public ExitTransition? Exit { get; init; }
     }
 
 
@@ -194,18 +197,19 @@ public partial class AnimatedContent<TState>
 
     private void ProcessElements()
     {
-        InterstateTransitions? fromCurrentToNewerTransitions = null;
-        InterstateTransitions? fromOlderToCurrentTransitions = null;
-
         foreach (var (older, current, newer) 
             in _elementsCollection.EnumerateForWrite(usingOrder: PreserveHiddenElements))
         {
-            var stateCase = GetStateCase(current.State);
+            var currentTransitions = TransitionsProvider?.Invoke(new StatesChange(
+                Earlier: new PossibleState(
+                    older is not null ? older.State : default,
+                    older is not null),
+                Current: current.State,
+                Later: new PossibleState(
+                    newer is not null ? newer.State : default,
+                    newer is not null)));
 
-            fromOlderToCurrentTransitions = TransitionsProvider?.Invoke(new StateChange(
-                SourceOrDefault: older is not null ? older.State : default,
-                Target: current.State,
-                IsSourcePresent: older is not null));
+            var stateCase = GetStateCase(current.State);
 
             bool isTarget = current == _elementsCollection.TargetElement;
 
@@ -216,13 +220,11 @@ public partial class AnimatedContent<TState>
 
             current.Fragment = stateCase.Fragment;
 
-            fromCurrentToNewerTransitions = fromOlderToCurrentTransitions;
-
 
             void PrepareTargetElement(StateElementsCollection<TState>.IElementForWrite element)
             {
                 current.SetEnterIfNotCached(
-                    enter: fromOlderToCurrentTransitions?.TargetEnter ?? stateCase.Enter ?? SharedEnter,
+                    enter: currentTransitions?.Enter ?? stateCase.Enter ?? SharedEnter,
                     cache: !ReassignTransitionsOnEachUpdate);
 
                 current.OnStateChanged = new EventCallback<AnimatedVisibility.State>(this, OnTargetElementVisibilityStateChange);
@@ -233,11 +235,11 @@ public partial class AnimatedContent<TState>
             void PrepareNonTargetElement(StateElementsCollection<TState>.IElementForWrite element)
             {
                 current.SetEnterIfNotCached(
-                    enter: fromOlderToCurrentTransitions?.TargetEnter ?? stateCase.Enter ?? SharedEnter,
+                    enter: currentTransitions?.Enter ?? stateCase.Enter ?? SharedEnter,
                     cache: !ReassignTransitionsOnEachUpdate);
 
                 current.SetExitIfNotCached(
-                    exit: fromCurrentToNewerTransitions?.SourceExit ?? stateCase.Exit ?? SharedExit,
+                    exit: currentTransitions?.Exit ?? stateCase.Exit ?? SharedExit,
                     cache: !ReassignTransitionsOnEachUpdate);
 
                 current.OnStateChanged = new EventCallback<AnimatedVisibility.State>(this, (AnimatedVisibility.State state) => OnNonTargetElementVisibilityStateChange(state, current));

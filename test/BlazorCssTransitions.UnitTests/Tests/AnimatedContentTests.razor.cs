@@ -256,45 +256,48 @@ public partial class AnimatedContentTests
     {
         var counters = new Counters();
 
-        Func<AnimatedContent<States>.StateChange, AnimatedContent<States>.InterstateTransitions> transitionProvider = (stateChange) =>
+        AnimatedContent<States>.CurrentTransitions TransitionsProvider(AnimatedContent<States>.StatesChange states)
         {
             switch (counters.Renders)
             {
                 case 0:
                     counters.TransitionsCalcsThisRender.ShouldBeLessThanOrEqualTo(0);
-                    stateChange.SourceOrDefault.ShouldBe((States)0);
-                    stateChange.IsSourcePresent.ShouldBeFalse();
-                    stateChange.Target.ShouldBe(States.Zero);
+                    states.Earlier.HasValue.ShouldBeFalse();
+                    states.Later.HasValue.ShouldBeFalse();
+                    states.Current.ShouldBe(States.Zero);
                     break;
                 case 1:
                     counters.TransitionsCalcsThisRender.ShouldBeLessThanOrEqualTo(1);
                     switch (counters.GetAndIncreaseTransitionsCalcsThisRender())
                     {
                         case 0:
-                            stateChange.SourceOrDefault.ShouldBe(States.Zero);
-                            stateChange.IsSourcePresent.ShouldBeTrue();
-                            stateChange.Target.ShouldBe(States.One);
+                            states.Earlier.HasValue.ShouldBeTrue();
+                            states.Earlier.Value.ShouldBe(States.Zero);
+                            states.Later.HasValue.ShouldBeFalse();
+                            states.Current.ShouldBe(States.One);
                             break;
                         case 1:
-                            stateChange.IsSourcePresent.ShouldBeFalse();
-                            stateChange.Target.ShouldBe(States.Zero);
+                            states.Later.HasValue.ShouldBeTrue();
+                            states.Later.Value.ShouldBe(States.One);
+                            states.Earlier.HasValue.ShouldBeFalse();
+                            states.Current.ShouldBe(States.Zero);
                             break;
 
                     }
                     break;
             }
 
-            return new AnimatedContent<States>.InterstateTransitions
+            return new AnimatedContent<States>.CurrentTransitions
             {
-                SourceExit = _exit,
-                TargetEnter = _enter
+                Enter = _enter,
+                Exit = _exit
             };
-        };
+        }
 
         var cut = RenderComponent<AnimatedContent<States>>(
             parameters => parameters
                 .Add(x => x.TargetState, States.Zero)
-                .Add(x => x.TransitionsProvider, transitionProvider)
+                .Add(x => x.TransitionsProvider, TransitionsProvider)
                 .Add(x => x.ChildContent, SampleContent()));
 
         counters.GetAndIncreaseRenders();
@@ -360,21 +363,23 @@ public partial class AnimatedContentTests
                 .Add(x => x.TransitionsProvider, TransitionsProvider)
                 .Add(x => x.ChildContent, SampleContent()));
 
-        AnimatedContent<States>.InterstateTransitions? TransitionsProvider(AnimatedContent<States>.StateChange stateChange)
+
+        static AnimatedContent<States>.CurrentTransitions? TransitionsProvider(AnimatedContent<States>.StatesChange states)
         {
-            if (stateChange.SourceEquals(States.Zero) || stateChange.Target is States.One)
-                return new AnimatedContent<States>.InterstateTransitions
+            return states.Current switch
+            {
+                States.One => new AnimatedContent<States>.CurrentTransitions
                 {
-                    TargetEnter = _enter2,
-                    SourceExit = _exit
-                };
-            if (stateChange.SourceEquals(States.One) || stateChange.Target is States.Zero)
-                return new AnimatedContent<States>.InterstateTransitions
+                    Enter = _enter2,
+                    Exit = _exit2
+                },
+                States.Zero => new AnimatedContent<States>.CurrentTransitions
                 {
-                    TargetEnter = _enter,
-                    SourceExit = _exit2
-                };
-            return null;
+                    Enter = _enter,
+                    Exit = _exit
+                },
+                _ => null
+            };
         }
 
         cut.MarkupMatches($"""
