@@ -32,8 +32,21 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     [Parameter]
     public string? Style { get; set; }
 
+    /// <summary>
+    /// Whether should stop animating size changes (instant changes).
+    /// </summary>
     [Parameter]
-    public bool StopResizing { get; set; } = false;
+    public bool StopAnimating { get; set; } = false;
+
+    /// <summary>
+    /// Predicate returning whether should animate size changes.
+    /// </summary>
+    [Parameter]
+    public Func<Dimensions, bool>? ShouldAnimate { get; set; }
+
+    public readonly record struct Dimensions(
+        double Height,
+        double Width);
 
     [Parameter]
     public EventCallback OnResized { get; set; }
@@ -75,10 +88,14 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
         get
         {
             IEnumerable<string> styles = [_spec.GetStyle(animatedProperty: "all")];
-            if (!FillHeight && _afterFirstRender && !StopResizing)
-                styles = styles.Append($"height: {_containerHeight.ToCss()}px;");
-            if (!FillWidth && _afterFirstRender && !StopResizing)
-                styles = styles.Append($"width: {_containerWidth.ToCss()}px;");
+
+            var shouldAnimateByPredicate = ShouldAnimate?.Invoke(new Dimensions(_contentHeight, _contentWidth))
+                ?? true;
+
+            if (!FillHeight && _afterFirstRender && !StopAnimating && shouldAnimateByPredicate)
+                styles = styles.Append($"height: {_contentHeight.ToCss()}px;");
+            if (!FillWidth && _afterFirstRender && !StopAnimating && shouldAnimateByPredicate)
+                styles = styles.Append($"width: {_contentWidth.ToCss()}px;");
             if (!String.IsNullOrEmpty(Style))
                 styles = styles.Append(Style);
 
@@ -115,18 +132,18 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     }
 
 
-    private double _containerHeight;
-    private double _containerWidth;
+    private double _contentHeight;
+    private double _contentWidth;
     private void UpdateTargetSize(DOMScrollRect maskSize)
     {
-        if (_containerHeight == maskSize.Height
-            && _containerWidth == maskSize.Width)
+        if (_contentHeight == maskSize.Height
+            && _contentWidth == maskSize.Width)
         {
             return;
         }
 
-        _containerHeight = maskSize.Height;
-        _containerWidth = maskSize.Width;
+        _contentHeight = maskSize.Height;
+        _contentWidth = maskSize.Width;
         StateHasChanged();
 
         NotifyOnResizeFinish();

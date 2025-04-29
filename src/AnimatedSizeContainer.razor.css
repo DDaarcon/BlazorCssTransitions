@@ -1,7 +1,7 @@
 .animated-size-container {
     overflow: hidden;
 
-    /* only for the first render or for when StopResising is true */
+    /* only for the first render or for when StopAnimating is true */
     height: fit-content;
     width: fit-content;
 }
