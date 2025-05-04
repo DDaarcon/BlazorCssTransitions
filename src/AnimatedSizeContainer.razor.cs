@@ -12,6 +12,8 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     private JsSizeMeter _sizeMeter { get; init; } = default!;
     [Inject]
     private JsSizeObserver _sizeObserver { get; init; } = default!;
+    [Inject]
+    private ITimerService _timerService { get; init; } = default!;
 
     [Parameter, EditorRequired]
     public required RenderFragment ChildContent { get; set; }
@@ -150,28 +152,25 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     }
 
 
-    private System.Timers.Timer? _transitionTimer;
+    private ITimerService.ITimerRegistration? _transitionTimer;
 
     private void NotifyOnResizeFinish()
     {
-        _transitionTimer?.Dispose();
-        _transitionTimer = TimerHelper.StartNewOneTimeTimer(_spec.GetTotalDuration(), () =>
-        {
-            InvokeAsync(() =>
+        _timerService.StartNew(_spec.GetTotalDuration(), 
+            actionToExecute: () =>
             {
-                OnResized.InvokeAsync();
-            });
-        });
-    }
-
-    public void Dispose()
-    {
-        _transitionTimer?.Dispose();
+                InvokeAsync(() =>
+                {
+                    OnResized.InvokeAsync();
+                });
+            }, 
+            caller: this,
+            oldRegistration: _transitionTimer);
     }
 
     public async ValueTask DisposeAsync()
     {
-        _transitionTimer?.Dispose();
+        _transitionTimer?.Abort();
 
         if (_resizeListener is not null)
             await _resizeListener.DisposeAsync();
