@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BlazorCssTransitions.ValueValidators.PropertySyntaxVaidators;
+﻿namespace BlazorCssTransitions.ValueValidators.PropertySyntaxVaidators;
 
 // TODO tests
 internal static class CssLengthPropertySyntaxValidator
@@ -16,45 +9,45 @@ internal static class CssLengthPropertySyntaxValidator
         
         if (foundUnit)
         {
-            return ValidateIfIsNumber(value.Slice(0, value.Length - 2));
+            return ValidateIfIsNumber(value[..^unitLength]);
         }
 
-        // TODO should we pass any number?
         return ValidateIfIsNumber(value);
     }
 
+    // have to be ordered by length, because of the way it is validated
     private readonly static string[] _units = [
-        "px",
-        "cm",
-        "mm",
-        "Q",
-        "in",
-        "pc",
-        "pt",
-		"cap",
-        "ch",
-        "em",
-        "ex",
-        "ic",
-        "lh",
+        "cqmin",
+        "cqmax",
         "rcap",
+        "vmax",
+        "vmin",
+        "cqw",
+        "cqh",
+        "cqi",
+        "cqb",
+		"cap",
         "rch",
         "rem",
         "rex",
         "ric",
         "rlh",
+        "px",
+        "cm",
+        "mm",
+        "in",
+        "pc",
+        "pt",
+        "ch",
+        "em",
+        "ex",
+        "ic",
+        "lh",
         "vh",
         "vw",
-        "vmax",
-        "vmin",
         "vb",
         "vi",
-        "cqw",
-        "cqh",
-        "cqi",
-        "cqb",
-        "cqmin",
-        "cqmax"
+        "Q",
 		];
 
     private static (bool isFound, int foundUnitLength) ValidateUnitPresenceAndGetUnitLength(ReadOnlySpan<char> value)
