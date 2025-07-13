@@ -8,7 +8,7 @@ public interface IAnimatedPropertyPercentage : IAnimatedPropertySettings<IAnimat
 
 public interface IAnimatedPropertyPercentageReady : IAnimatedPropertyPercentage, IAnimatedPropertyReadyToRegister<IAnimatedPropertyPercentageRegistration>
 {
-	IAnimatedPropertyPercentageReady Duplicate();
+	new IAnimatedPropertyPercentageReady Duplicate();
 }
 
 public interface IAnimatedPropertyPercentageRegistration : IAnimatedPropertyRegistration

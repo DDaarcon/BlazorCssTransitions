@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace BlazorCssTransitions.AnimatedProperties;
+﻿namespace BlazorCssTransitions.AnimatedProperties;
 
 public interface IAnimatedPropertyLengthPercentage : IAnimatedPropertySettings<IAnimatedPropertyLengthPercentage, IAnimatedPropertyLengthPercentageReady, IAnimatedPropertyLengthPercentageRegistration>
 {
@@ -10,7 +8,7 @@ public interface IAnimatedPropertyLengthPercentage : IAnimatedPropertySettings<I
 
 public interface IAnimatedPropertyLengthPercentageReady : IAnimatedPropertyLengthPercentage, IAnimatedPropertyReadyToRegister<IAnimatedPropertyLengthPercentageRegistration>
 {
-	IAnimatedPropertyLengthPercentageReady Duplicate();
+	new IAnimatedPropertyLengthPercentageReady Duplicate();
 }
 
 public interface IAnimatedPropertyLengthPercentageRegistration : IAnimatedPropertyRegistration

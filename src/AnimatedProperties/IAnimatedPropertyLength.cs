@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BlazorCssTransitions.AnimatedProperties;
+﻿namespace BlazorCssTransitions.AnimatedProperties;
 
 public interface IAnimatedPropertyLength : IAnimatedPropertySettings<IAnimatedPropertyLength, IAnimatedPropertyLengthReady, IAnimatedPropertyLengthRegistration>
 {
@@ -15,7 +8,7 @@ public interface IAnimatedPropertyLength : IAnimatedPropertySettings<IAnimatedPr
 
 public interface IAnimatedPropertyLengthReady : IAnimatedPropertyLength, IAnimatedPropertyReadyToRegister<IAnimatedPropertyLengthRegistration>
 {
-	IAnimatedPropertyLengthReady Duplicate();
+	new IAnimatedPropertyLengthReady Duplicate();
 }
 
 public interface IAnimatedPropertyLengthRegistration : IAnimatedPropertyRegistration

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 
 namespace BlazorCssTransitions.AnimatedProperties;
 
@@ -15,7 +10,7 @@ public interface IAnimatedPropertyColor : IAnimatedPropertySettings<IAnimatedPro
 
 public interface IAnimatedPropertyColorReady : IAnimatedPropertyColor, IAnimatedPropertyReadyToRegister<IAnimatedPropertyColorRegistration>
 {
-	IAnimatedPropertyColorReady Duplicate();
+	new IAnimatedPropertyColorReady Duplicate();
 }
 
 public interface IAnimatedPropertyColorRegistration : IAnimatedPropertyRegistration

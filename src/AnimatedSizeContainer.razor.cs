@@ -176,7 +176,7 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
 
     private void NotifyOnResizeFinish()
     {
-        _timerService.StartNew(_spec.GetTotalDuration(), 
+        _transitionTimer = _timerService.StartNew(_spec.GetTotalDuration(), 
             actionToExecute: () =>
             {
                 InvokeAsync(() =>
