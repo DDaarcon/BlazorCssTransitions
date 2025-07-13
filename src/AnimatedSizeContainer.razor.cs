@@ -46,6 +46,18 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     [Parameter]
     public Func<Dimensions, bool>? ShouldAnimate { get; set; }
 
+    /// <summary>
+    /// Whether contaienr height should transition to 0. Is ignored when <see cref="FillHeight"/> is <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool CollapseVertically { get; set; } = false;
+
+    /// <summary>
+    /// Whether contaienr width should transition to 0. Is ignored when <see cref="FillWidth"/> is <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool CollapseHorizontally { get; set; } = false;
+
     public readonly record struct Dimensions(
         double Height,
         double Width);
@@ -94,10 +106,18 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
             var shouldAnimateByPredicate = ShouldAnimate?.Invoke(new Dimensions(_contentHeight, _contentWidth))
                 ?? true;
 
-            if (!FillHeight && _afterFirstRender && !StopAnimating && shouldAnimateByPredicate)
+            bool enableAdjustingSizeToMask = _afterFirstRender && !StopAnimating && shouldAnimateByPredicate;
+
+            if (!FillHeight && CollapseVertically)
+                styles = styles.Append($"height: 0px;");
+            else if (!FillHeight && enableAdjustingSizeToMask)
                 styles = styles.Append($"height: {_contentHeight.ToCss()}px;");
-            if (!FillWidth && _afterFirstRender && !StopAnimating && shouldAnimateByPredicate)
+
+            if (!FillWidth && CollapseHorizontally)
+                styles = styles.Append($"width: 0px;");
+            else if (!FillWidth && enableAdjustingSizeToMask)
                 styles = styles.Append($"width: {_contentWidth.ToCss()}px;");
+
             if (!String.IsNullOrEmpty(Style))
                 styles = styles.Append(Style);
 
