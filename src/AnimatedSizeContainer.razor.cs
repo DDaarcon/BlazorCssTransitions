@@ -1,4 +1,5 @@
 ﻿using BlazorCssTransitions.Shared;
+using BlazorCssTransitions.Shared.CssStylesValidation;
 using BlazorCssTransitions.Shared.JsInterop;
 using BlazorCssTransitions.Shared.SizeMeasurement;
 using BlazorCssTransitions.Specifications;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace BlazorCssTransitions;
 
+// TODO write tests for CollapseVertically and CollapseHorizontally
 public partial class AnimatedSizeContainer : IAsyncDisposable
 {
     [Inject]
@@ -14,6 +16,8 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     private JsSizeObserver _sizeObserver { get; init; } = default!;
     [Inject]
     private ITimerService _timerService { get; init; } = default!;
+    [Inject]
+    private ICssStylesAppliedValidator _cssStylesAppliedValidator { get; init; } = default!;
 
     [Parameter, EditorRequired]
     public required RenderFragment ChildContent { get; set; }
@@ -39,6 +43,7 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     /// </summary>
     [Parameter]
     public bool StopAnimating { get; set; } = false;
+    private bool _stopAnimating;
 
     /// <summary>
     /// Predicate returning whether should animate size changes.
@@ -51,12 +56,14 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     /// </summary>
     [Parameter]
     public bool CollapseVertically { get; set; } = false;
+    private bool _collapseVertically;
 
     /// <summary>
     /// Whether contaienr width should transition to 0. Is ignored when <see cref="FillWidth"/> is <c>true</c>.
     /// </summary>
     [Parameter]
     public bool CollapseHorizontally { get; set; } = false;
+    private bool _collapseHorizontally;
 
     public readonly record struct Dimensions(
         double Height,
@@ -66,16 +73,23 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     public EventCallback OnResized { get; set; }
 
     /// <summary>
+    /// Read-only property indicating whether the container is currently animating. <br />
+    /// * This is useful for preventing multiple animations from being triggered at the same time.
+    /// </summary>
+    public bool IsAnimating { get; private set; }
+
+    /// <summary>
     /// Forces recalculation
     /// </summary>
     public async Task Recalculate()
     {
         var maskSize = await _sizeMeter.MeasureElementScroll(MaskReference);
 
-        UpdateTargetSize(maskSize);
+        UpdateContentSize(maskSize);
     }
 
 
+    private ElementReference ContainerReference { get; set; }
     private ElementReference MaskReference { get; set; }
 
     private string ContainerClass
@@ -97,80 +111,177 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
     private const string _fillWidthClass = "fill-width";
     private const string _fillHeightClass = "fill-height";
 
-    private string ContainerStyle
-    {
-        get
-        {
-            IEnumerable<string> styles = [_spec.GetStyle(animatedProperty: "all")];
+    private double _targetHeightPx = 0d;
+    private double _targetWidthPx = 0d;
 
-            var shouldAnimateByPredicate = ShouldAnimate?.Invoke(new Dimensions(_contentHeight, _contentWidth))
-                ?? true;
+    private string ContainerStyle => GetContainerStyle();
 
-            bool enableAdjustingSizeToMask = _afterFirstRender && !StopAnimating && shouldAnimateByPredicate;
-
-            if (!FillHeight && CollapseVertically)
-                styles = styles.Append($"height: 0px;");
-            else if (!FillHeight && enableAdjustingSizeToMask)
-                styles = styles.Append($"height: {_contentHeight.ToCss()}px;");
-
-            if (!FillWidth && CollapseHorizontally)
-                styles = styles.Append($"width: 0px;");
-            else if (!FillWidth && enableAdjustingSizeToMask)
-                styles = styles.Append($"width: {_contentWidth.ToCss()}px;");
-
-            if (!String.IsNullOrEmpty(Style))
-                styles = styles.Append(Style);
-
-            return String.Join(" ", styles);
-        }
-    }
-
-    private bool _afterFirstRender;
+    private bool _isAfterFirstRender;
+    // Some updates require the StopAnimaing change to be already applied to properly apply animations.
+    private bool _isRespondToExternalSizeChangeRequestScheduledAfterRender;
+    private bool _isWaitingForRequiredStylesToBeApplied;
 
     private IAsyncDisposable? _resizeListener;
 
     protected override void OnParametersSet()
     {
         _spec = Spec ?? _defaultSpec;
+
+        bool shouldRespondToExternalSizeChangeRequestImmediately = true;
+
+        if (_stopAnimating != StopAnimating)
+        {
+            if (!StopAnimating)
+            {
+                shouldRespondToExternalSizeChangeRequestImmediately = false;
+                _isRespondToExternalSizeChangeRequestScheduledAfterRender = true;
+            }
+            _stopAnimating = StopAnimating;
+        }
+
+        if (shouldRespondToExternalSizeChangeRequestImmediately)
+            RespondToExternalSizeChangeRequest();
+    }
+
+    private void RespondToExternalSizeChangeRequest()
+    {
+        if (_collapseHorizontally != CollapseHorizontally
+            || _collapseVertically != CollapseVertically)
+        {
+            _collapseHorizontally = CollapseHorizontally;
+            _collapseVertically = CollapseVertically;
+
+            UpdateTargetSize();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (_isRespondToExternalSizeChangeRequestScheduledAfterRender)
         {
-            return;
+            _isRespondToExternalSizeChangeRequestScheduledAfterRender = false;
+
+            _isWaitingForRequiredStylesToBeApplied = true;
+            await _cssStylesAppliedValidator.EnsureStylesWereApplied(ContainerReference);
+            _isWaitingForRequiredStylesToBeApplied = false;
+
+            RespondToExternalSizeChangeRequest();
         }
+
+        if (!firstRender)
+            return;
+
+        // only first render
 
         _resizeListener = await _sizeObserver.ListenForElementSizeChanges(MaskReference, async size =>
         {
             await InvokeAsync(() =>
             {
-                UpdateTargetSize(size);
+                UpdateContentSize(size);
             });
         });
         
-        _afterFirstRender = true;
+        _isAfterFirstRender = true;
         await Recalculate();
     }
 
-
-    private double _contentHeight;
-    private double _contentWidth;
-    private void UpdateTargetSize(DOMScrollRect maskSize)
+    protected override bool ShouldRender()
     {
-        if (_contentHeight == maskSize.Height
-            && _contentWidth == maskSize.Width)
+        return !_isWaitingForRequiredStylesToBeApplied;
+    }
+
+
+    private double _contentHeightPx;
+    private double _contentWidthPx;
+    private void UpdateContentSize(DOMScrollRect maskSize)
+    {
+        if (_contentHeightPx == maskSize.Height
+            && _contentWidthPx == maskSize.Width)
         {
             return;
         }
 
-        _contentHeight = maskSize.Height;
-        _contentWidth = maskSize.Width;
-        StateHasChanged();
+        _contentHeightPx = maskSize.Height;
+        _contentWidthPx = maskSize.Width;
 
-        NotifyOnResizeFinish();
+        UpdateTargetSize();
     }
 
+    private void UpdateTargetSize()
+    {
+        bool hasTargetSizeBeenUpdated = false;
+        if (!FillHeight)
+        {
+            if (_collapseVertically)
+            {
+                if (_targetHeightPx != 0)
+                {
+                    _targetHeightPx = 0;
+                    hasTargetSizeBeenUpdated = true;
+                }
+            }
+            else if (_contentHeightPx != _targetHeightPx)
+            {
+                _targetHeightPx = _contentHeightPx;
+                hasTargetSizeBeenUpdated = true;
+            }
+        }
+
+        if (!FillWidth)
+        {
+            if (_collapseHorizontally)
+            {
+                if (_targetWidthPx != 0)
+                {
+                    _targetWidthPx = 0;
+                    hasTargetSizeBeenUpdated = true;
+                }
+            }
+            else if (_contentWidthPx != _targetWidthPx)
+            {
+                _targetWidthPx = _contentWidthPx;
+                hasTargetSizeBeenUpdated = true;
+            }
+        }
+
+        if (hasTargetSizeBeenUpdated)
+        {
+            IsAnimating = true;
+            NotifyOnResizeFinish();
+
+            StateHasChanged();
+        }
+    }
+
+    // TODO caching?
+    private string GetContainerStyle()
+    {
+        IEnumerable<string> styles = [_spec.GetStyle(animatedProperty: "all")];
+
+        var shouldAnimateByPredicate = ShouldAnimate?.Invoke(new Dimensions(_targetHeightPx, _targetWidthPx))
+            ?? true;
+
+        bool enableAdjustingSizeToMask = _isAfterFirstRender
+            && !_stopAnimating
+            && shouldAnimateByPredicate;
+
+        if (!FillHeight
+            && (CollapseVertically || enableAdjustingSizeToMask))
+        {
+            styles = styles.Append($"height: {_targetHeightPx.ToCss()}px;");
+        }
+
+        if (!FillWidth
+            && (CollapseHorizontally || enableAdjustingSizeToMask))
+        {
+            styles = styles.Append($"width: {_targetWidthPx.ToCss()}px;");
+        }
+
+        if (!String.IsNullOrEmpty(Style))
+            styles = styles.Append(Style);
+
+        return String.Join(" ", styles);
+    }
 
     private ITimerService.ITimerRegistration? _transitionTimer;
 
@@ -181,6 +292,7 @@ public partial class AnimatedSizeContainer : IAsyncDisposable
             {
                 InvokeAsync(() =>
                 {
+                    IsAnimating = false;
                     OnResized.InvokeAsync();
                 });
             }, 
