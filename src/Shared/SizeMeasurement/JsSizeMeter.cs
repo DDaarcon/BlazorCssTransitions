@@ -1,19 +1,13 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BlazorCssTransitions.Shared.JsInterop;
+namespace BlazorCssTransitions.Shared.SizeMeasurement;
 
-// TODO for now everything will be in one class, if there will be more js functionality then might consider splitting
 internal class JsSizeMeter(IJSRuntime jsRuntime) : IAsyncDisposable
 {
     private readonly Lazy<Task<IJSObjectReference>> moduleTask
         = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorCssTransitions/scripts.js").AsTask());
+            "import", "./_content/BlazorCssTransitions/size-meter.js").AsTask());
 
     internal async ValueTask<DOMRect> MeasureElement(ElementReference element)
     {

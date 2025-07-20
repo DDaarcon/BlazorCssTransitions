@@ -1,12 +1,10 @@
-// This is a JavaScript module that is loaded on demand. It can export any number of
-// functions, and may import other JavaScript modules if required.
 
 /**
  * @param {HTMLElement} element
  * @returns {DOMRect}
  */
 export function measureElement(element) {
-  return element.getBoundingClientRect();
+    return element.getBoundingClientRect();
 }
 
 
@@ -24,10 +22,10 @@ export function measureElement(element) {
  * @returns {DOMScrollSize}
  */
 export async function measureElementScroll(element) {
-  return {
-    width: element.scrollWidth,
-    height: element.scrollHeight,
-    left: element.scrollLeft,
-    top: element.scrollTop
-  }
+    return {
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        left: element.scrollLeft,
+        top: element.scrollTop
+    }
 }

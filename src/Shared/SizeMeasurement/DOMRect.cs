@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlazorCssTransitions.Shared.JsInterop;
+namespace BlazorCssTransitions.Shared.SizeMeasurement;
 
 internal record DOMRect(
     double X,

@@ -1,6 +1,5 @@
 ﻿using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Shared.CssStylesValidation;
-using BlazorCssTransitions.Shared.JsInterop;
 using BlazorCssTransitions.Shared.SizeMeasurement;
 using BlazorCssTransitions.Specifications;
 using Microsoft.AspNetCore.Components;

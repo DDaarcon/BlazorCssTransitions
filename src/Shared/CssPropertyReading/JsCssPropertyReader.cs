@@ -1,4 +1,4 @@
-﻿using BlazorCssTransitions.Shared.JsInterop;
+﻿using BlazorCssTransitions.Shared.SizeMeasurement;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
