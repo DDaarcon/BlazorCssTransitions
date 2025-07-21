@@ -1,0 +1,35 @@
+@using BlazorCssTransitions
+@using BlazorCssTransitions.Example.Pages.Helpers
+
+@* Example: RemoveFromDOMWhenHidden for AnimatedVisibility *@
+<div style="margin-bottom: 2rem;">
+    <h4>RemoveFromDOMWhenHidden</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Uses the same custom enter/exit transitions as the previous example.<br />
+        <b>RemoveFromDOMWhenHidden</b> is enabled, so the element is removed from the DOM when hidden.<br />
+        This is useful when you want to initialize new content inside <b>AnimatedVisibility</b> each time it appears.<br />
+        <b>Counter below will reset every time the content is shown.</b>
+    </div>
+    <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
+    <AnimatedVisibility Visible="isVisible" Enter="enterTransition" Exit="exitTransition" RemoveFromDOMWhenHidden>
+        <ChildContent>
+            <div style="padding: 1rem; background: #e3fcec; border-radius: 4px;">
+                <SimpleCounter />
+                This content uses <b>RemoveFromDOMWhenHidden</b>.
+            </div>
+        </ChildContent>
+    </AnimatedVisibility>
+    <!-- Code comment for users: This example demonstrates RemoveFromDOMWhenHidden with custom transitions and a counter that resets. -->
+</div>
+
+@code {
+    private bool isVisible = true;
+    private void Toggle() => isVisible = !isVisible;
+
+    private readonly EnterTransition enterTransition
+        = EnterTransition.SlideInHorizontally(Spec.Ease(durationMs: 500), initialX: "20px");
+
+    private readonly ExitTransition exitTransition
+        = ExitTransition.SlideOutVertically(Spec.Linear(duration: TimeSpan.FromSeconds(1)), finishY: "20px")
+            + ExitTransition.FadeOut(Spec.EaseOut(duration: TimeSpan.FromMilliseconds(500), delay: TimeSpan.FromMilliseconds(500)));
+}

@@ -1,0 +1,24 @@
+@using BlazorCssTransitions
+
+@* Example: StartWithTransition for AnimatedVisibility *@
+<div style="margin-bottom: 2rem;">
+    <h4>Show/Hide with StartWithTransition</h4>
+    <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
+    <button @onclick="ToggleMount">@(isMounted ? "Remove AnimatedVisibility" : "Add AnimatedVisibility")</button>
+    @if (isMounted)
+    {
+        <AnimatedVisibility Visible="isVisible" StartWithTransition>
+            <ChildContent>
+                <div style="padding: 1rem; background: #ffe0e0; border-radius: 4px;">This content uses <b>StartWithTransition</b> and will animate on first show.</div>
+            </ChildContent>
+        </AnimatedVisibility>
+    }
+    <!-- Code comment for users: This example demonstrates the StartWithTransition flag and mounting/unmounting the component. -->
+</div>
+
+@code {
+    private bool isVisible = true;
+    private bool isMounted = true;
+    private void Toggle() => isVisible = !isVisible;
+    private void ToggleMount() => isMounted = !isMounted;
+}

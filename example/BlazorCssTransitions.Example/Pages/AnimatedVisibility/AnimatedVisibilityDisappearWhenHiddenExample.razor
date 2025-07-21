@@ -1,0 +1,34 @@
+@using BlazorCssTransitions
+@using BlazorCssTransitions.Example.Pages.Helpers
+
+@* Example: DisappearWhenHidden for AnimatedVisibility *@
+<div style="margin-bottom: 2rem;">
+    <h4>DisappearWhenHidden</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Uses the same custom enter/exit transitions as the previous example.<br />
+        <b>DisappearWhenHidden</b> is enabled, so the element will use <code>display: none</code> when hidden.<br />
+        <b>Counter below will <u>not</u> reset when the content is shown again (state is preserved).</b>
+    </div>
+    <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
+    <AnimatedVisibility Visible="isVisible" Enter="enterTransition" Exit="exitTransition" DisappearWhenHidden>
+        <ChildContent>
+            <div style="padding: 1rem; background: #f3e8fd; border-radius: 4px;">
+                <SimpleCounter />
+                This content uses <b>DisappearWhenHidden</b>.
+            </div>
+        </ChildContent>
+    </AnimatedVisibility>
+    <!-- Code comment for users: This example demonstrates DisappearWhenHidden with custom transitions and a counter that preserves state. -->
+</div>
+
+@code {
+    private bool isVisible = true;
+    private void Toggle() => isVisible = !isVisible;
+
+    private readonly EnterTransition enterTransition
+        = EnterTransition.SlideInHorizontally(Spec.Ease(durationMs: 500), initialX: "20px");
+
+    private readonly ExitTransition exitTransition
+        = ExitTransition.SlideOutVertically(Spec.Linear(duration: TimeSpan.FromSeconds(1)), finishY: "20px")
+            + ExitTransition.FadeOut(Spec.EaseOut(duration: TimeSpan.FromMilliseconds(500), delay: TimeSpan.FromMilliseconds(500)));
+}

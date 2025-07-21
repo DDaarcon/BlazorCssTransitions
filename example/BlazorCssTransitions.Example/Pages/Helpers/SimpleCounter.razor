@@ -1,0 +1,10 @@
+@* SimpleCounter: A basic counter component with internal state *@
+<div style="padding: 0.5rem; background: #fffbe6; border-radius: 4px; margin-bottom: 0.5rem;">
+    <span>Counter value: <b>@count</b></span>
+    <button @onclick="Increment" style="margin-left: 1rem;">Increment</button>
+</div>
+
+@code {
+    private int count = 0;
+    private void Increment() => count++;
+}

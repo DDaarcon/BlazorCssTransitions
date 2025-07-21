@@ -1,0 +1,32 @@
+@using BlazorCssTransitions
+
+@* Example: Custom Enter/Exit Transitions for AnimatedVisibility *@
+<div style="margin-bottom: 2rem;">
+    <h4>Custom Enter/Exit Transitions</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        <b>Enter:</b> Slide in horizontally from <code>x: 20px</code>, duration <code>500ms</code>.<br />
+        <b>Exit:</b> Composite: Slide out vertically to <code>y: 20px</code>, duration <code>1s</code> (linear),<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plus Fade out (duration <code>500ms</code>, delay <code>500ms</code>, ease-out).
+    </div>
+    <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
+    <AnimatedVisibility Visible="isVisible" Enter="enterTransition" Exit="exitTransition">
+        <ChildContent>
+            <div style="padding: 1rem; background: #e8f5e9; border-radius: 4px;">
+                This content uses a custom <b>slide-in</b> and <b>composite slide-out + fade-out</b> transition.
+            </div>
+        </ChildContent>
+    </AnimatedVisibility>
+    <!-- Code comment for users: This example demonstrates custom enter and exit transitions. -->
+</div>
+
+@code {
+    private bool isVisible = true;
+    private void Toggle() => isVisible = !isVisible;
+
+    private readonly EnterTransition enterTransition
+        = EnterTransition.SlideInHorizontally(Spec.Ease(durationMs: 500), initialX: "20px");
+
+    private readonly ExitTransition exitTransition
+        = ExitTransition.SlideOutVertically(Spec.Linear(duration: TimeSpan.FromSeconds(1)), finishY: "20px")
+            + ExitTransition.FadeOut(Spec.EaseOut(duration: TimeSpan.FromMilliseconds(500), delay: TimeSpan.FromMilliseconds(500)));
+}
