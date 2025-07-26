@@ -1,0 +1,19 @@
+@property --start-slide-in-offset-x {
+    syntax: "<length-percentage>";
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --start-slide-in-offset-y {
+    syntax: "<length-percentage>";
+    inherits: true;
+    initial-value: 0;
+}
+
+.slide-in-animation-start {
+    translate: var(--start-slide-in-offset-x) var(--start-slide-in-offset-y);
+}
+
+.slide-in-animation-finish {
+    translate: 0 0;
+}

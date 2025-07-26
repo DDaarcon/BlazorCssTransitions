@@ -1,0 +1,38 @@
+/* _content/BlazorCssTransitions/AnimatedContent.razor.rz.scp.css */
+.animated-content[b-96ou12j0bc] {
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+}
+
+[b-96ou12j0bc] .animated-content-item {
+    grid-row: 1;
+    grid-column: 1;
+}
+/* _content/BlazorCssTransitions/AnimatedSizeContainer.razor.rz.scp.css */
+.animated-size-container[b-f8jc88jqnd] {
+    overflow: hidden;
+
+    /* only for the first render or for when StopAnimating is true */
+    height: fit-content;
+    width: fit-content;
+}
+
+    .animated-size-container.fill-width[b-f8jc88jqnd],
+    .animated-size-container.fill-width .animated-size-container-mask[b-f8jc88jqnd] {
+        width: 100%;
+    }
+
+    .animated-size-container.fill-height[b-f8jc88jqnd],
+    .animated-size-container.fill-height .animated-size-container-mask[b-f8jc88jqnd] {
+        height: 100%;
+    }
+
+.animated-size-container-mask[b-f8jc88jqnd] {
+    height: fit-content;
+    width: fit-content;
+}
+/* _content/BlazorCssTransitions/AnimatedVisibility.razor.rz.scp.css */
+.disappeared[b-f7xq69vscx] {
+    display: none;
+}

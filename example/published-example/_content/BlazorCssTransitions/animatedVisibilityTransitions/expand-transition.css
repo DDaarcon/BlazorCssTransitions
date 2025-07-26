@@ -1,0 +1,31 @@
+@property --start-expand-scale-x {
+    syntax: "<number>|<percentage>";
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --start-expand-scale-y {
+    syntax: "<number>|<percentage>";
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --finish-expand-scale-y {
+    syntax: "<number>|<percentage>";
+    inherits: true;
+    initial-value: 1;
+}
+
+@property --finish-expand-scale-y {
+    syntax: "<number>|<percentage>";
+    inherits: true;
+    initial-value: 1;
+}
+
+.expand-animation-start {
+    scale: var(--start-expand-scale-x) var(--start-expand-scale-y);
+}
+
+.expand-animation-finish {
+    scale: var(--finish-expand-scale-x) var(--finish-expand-scale-y);
+}
