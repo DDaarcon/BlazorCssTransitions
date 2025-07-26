@@ -1,0 +1,34 @@
+﻿@using BlazorCssTransitions
+
+@* Example: Nested AnimatedSizeContainers *@
+<div style="margin-bottom: 2rem;">
+    <h4>Complex nested AnimatedSizeContainers</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Animate size changes with nested containers, but hiding inner container does not trigger animation of the outer container.
+    </div>
+    <button @onclick="ToggleOuter">@(outerExpanded ? "Collapse Outer" : "Expand Outer")</button>
+    <button @onclick="ToggleInner">@(innerExpanded ? "Collapse Inner" : "Expand Inner")</button>
+    <AnimatedSizeContainer CollapseVertically="!outerExpanded"
+                           StopAnimating=@(!_shouldAnimateOuterContainer)
+                           OnResized=@(() => _shouldAnimateOuterContainer = false)> @* as soon as animation is finished we should stop responding to any size changes *@
+        <div style="padding: 1rem; background: #e0e0e0; border-radius: 4px;">
+            Outer container
+
+            <AnimatedSizeContainer CollapseVertically="!innerExpanded">
+                    <div style="padding: 1rem; background: #fffbe0; border-radius: 4px;">Inner container</div>
+            </AnimatedSizeContainer>
+        </div>
+    </AnimatedSizeContainer>
+</div>
+
+@code {
+    private bool _shouldAnimateOuterContainer = false;
+    private bool outerExpanded = false;
+    private bool innerExpanded = false;
+    private void ToggleOuter()
+    {
+        _shouldAnimateOuterContainer = true;
+        outerExpanded = !outerExpanded;
+    }
+    private void ToggleInner() => innerExpanded = !innerExpanded;
+}

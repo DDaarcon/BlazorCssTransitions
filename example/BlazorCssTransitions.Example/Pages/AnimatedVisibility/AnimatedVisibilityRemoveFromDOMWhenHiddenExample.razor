@@ -12,12 +12,10 @@
     </div>
     <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
     <AnimatedVisibility Visible="isVisible" Enter="enterTransition" Exit="exitTransition" RemoveFromDOMWhenHidden>
-        <ChildContent>
-            <div style="padding: 1rem; background: #e3fcec; border-radius: 4px;">
-                <SimpleCounter />
-                This content uses <b>RemoveFromDOMWhenHidden</b>.
-            </div>
-        </ChildContent>
+        <div style="padding: 1rem; background: #e3fcec; border-radius: 4px;">
+            <SimpleCounter />
+            This content uses <b>RemoveFromDOMWhenHidden</b>.
+        </div>
     </AnimatedVisibility>
     <!-- Code comment for users: This example demonstrates RemoveFromDOMWhenHidden with custom transitions and a counter that resets. -->
 </div>

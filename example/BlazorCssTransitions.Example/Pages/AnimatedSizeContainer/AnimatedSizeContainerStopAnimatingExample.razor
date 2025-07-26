@@ -1,0 +1,20 @@
+@using BlazorCssTransitions
+
+@* Example: StopAnimating for AnimatedSizeContainer *@
+<div style="margin-bottom: 2rem;">
+    <h4>StopAnimating</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Instantly change size without animation.
+    </div>
+    <button @onclick="Toggle">@(expanded ? "Collapse Instantly" : "Expand Instantly")</button>
+    <AnimatedSizeContainer CollapseVertically="!expanded" StopAnimating>
+        <ChildContent>
+            <div style="padding: 1rem; background: #ffe0e0; border-radius: 4px;">This content changes size instantly.</div>
+        </ChildContent>
+    </AnimatedSizeContainer>
+</div>
+
+@code {
+    private bool expanded = true;
+    private void Toggle() => expanded = !expanded;
+}

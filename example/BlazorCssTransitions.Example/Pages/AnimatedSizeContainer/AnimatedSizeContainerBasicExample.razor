@@ -1,13 +1,17 @@
-@* Example: Expand/Collapse with Animation for AnimatedSizeContainer *@
+@using BlazorCssTransitions
+
+@* Example: Basic expand/collapse for AnimatedSizeContainer *@
 <div style="margin-bottom: 2rem;">
-    <h4>Expand/Collapse with Animation</h4>
-    <button @onclick="Toggle">Toggle Size</button>
-    <BlazorCssTransitions.AnimatedSizeContainer CollapseVertically="!expanded">
+    <h4>Basic Expand/Collapse</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Animate showing/hiding content vertically.
+    </div>
+    <button @onclick="Toggle">@(expanded ? "Collapse" : "Expand")</button>
+    <AnimatedSizeContainer CollapseVertically="!expanded">
         <ChildContent>
-            <div style="padding: 1rem; background: #fff3e0; border-radius: 4px;">This content expands and collapses smoothly.</div>
+            <div style="padding: 1rem; background: #e0f7fa; border-radius: 4px;">This content expands and collapses smoothly.</div>
         </ChildContent>
-    </BlazorCssTransitions.AnimatedSizeContainer>
-    <!-- Code comment for users: The AnimatedSizeContainer animates changes in its content's size. -->
+    </AnimatedSizeContainer>
 </div>
 
 @code {

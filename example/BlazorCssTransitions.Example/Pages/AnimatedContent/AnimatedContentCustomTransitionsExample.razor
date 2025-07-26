@@ -1,0 +1,34 @@
+@using BlazorCssTransitions
+
+@* Example: Custom transitions per state for AnimatedContent *@
+<div style="margin-bottom: 2rem;">
+    <h4>Custom Transitions Per State</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Each state uses a different enter/exit transition.
+    </div>
+    <button @onclick="() => SetState(1)" disabled="@(state == 1)">State 1</button>
+    <button @onclick="() => SetState(2)" disabled="@(state == 2)">State 2</button>
+    <AnimatedContent TState="int" TargetState="state" Switch="StateSwitch" />
+</div>
+
+@code {
+    private int state = 1;
+    private void SetState(int s) => state = s;
+
+    private AnimatedContent<int>.StateSwitchCase StateSwitch(int s) => s switch
+    {
+        1 => new AnimatedContent<int>.StateSwitchCase {
+            Fragment = builder => builder.AddContent(0, "State 1 with FadeIn/FadeOut"),
+            Enter = EnterTransition.FadeIn(),
+            Exit = ExitTransition.FadeOut()
+        },
+        2 => new AnimatedContent<int>.StateSwitchCase {
+            Fragment = builder => builder.AddContent(0, "State 2 with SlideIn/SlideOut"),
+            Enter = EnterTransition.SlideInHorizontally(Spec.Ease(durationMs: 400), initialX: "30px"),
+            Exit = ExitTransition.SlideOutVertically(Spec.Linear(duration: TimeSpan.FromMilliseconds(600)), finishY: "30px")
+        },
+        _ => new AnimatedContent<int>.StateSwitchCase {
+            Fragment = builder => builder.AddContent(0, "Unknown state")
+        }
+    };
+}

@@ -1,0 +1,22 @@
+@using BlazorCssTransitions
+
+@* Example: ShouldAnimate predicate for AnimatedSizeContainer *@
+<div style="margin-bottom: 2rem;">
+    <h4>ShouldAnimate Predicate</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Conditionally animate based on content size.
+    </div>
+    <button @onclick="Toggle">@(expanded ? "Collapse" : "Expand")</button>
+    <AnimatedSizeContainer CollapseVertically="!expanded" ShouldAnimate="ShouldAnimate">
+        <ChildContent>
+            <div style="padding: 1rem; background: #e0fff7; border-radius: 4px;">This content only animates if height is greater than 50px.</div>
+        </ChildContent>
+    </AnimatedSizeContainer>
+</div>
+
+@code {
+    private bool expanded = true;
+    private void Toggle() => expanded = !expanded;
+
+    private bool ShouldAnimate(AnimatedSizeContainer.Dimensions d) => d.Height > 50;
+}

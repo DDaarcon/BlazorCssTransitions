@@ -1,0 +1,30 @@
+@using BlazorCssTransitions
+@using BlazorCssTransitions.Example.Pages.Helpers
+
+@* Example: PreserveHiddenElements for AnimatedContent *@
+<div style="margin-bottom: 2rem;">
+    <h4>PreserveHiddenElements</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Hidden elements are preserved and their state is retained.<br />
+        Each state below has its own counter. Switch states and increment counters to see that their state is preserved.
+    </div>
+    <button @onclick="() => SetState(1)" disabled="@(state == 1)">State 1</button>
+    <button @onclick="() => SetState(2)" disabled="@(state == 2)">State 2</button>
+    <AnimatedContent TState="int" TargetState="state" PreserveHiddenElements>
+        @if (context == 1)
+        {
+            <SimpleCounter />
+            @:This is state 1
+        }
+        else if (context == 2)
+        {
+            <SimpleCounter />
+            @:This is state 2
+        }
+    </AnimatedContent>
+</div>
+
+@code {
+    private int state = 1;
+    private void SetState(int s) => state = s;
+}

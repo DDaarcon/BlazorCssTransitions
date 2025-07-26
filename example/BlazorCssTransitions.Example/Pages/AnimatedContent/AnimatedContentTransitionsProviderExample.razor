@@ -1,0 +1,51 @@
+@using BlazorCssTransitions
+
+@* Example: TransitionsProvider usage for AnimatedContent *@
+<div style="margin-bottom: 2rem;">
+    <h4>TransitionsProvider Usage</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Transitions are provided based on state change direction.<br />
+        Going to a higher state: slide in from right, slide out to left.<br />
+        Going to a lower state: slide in from left, slide out to right.<br />
+    </div>
+    <button @onclick="() => SetState(1)" disabled="@(state == 1)">State 1</button>
+    <button @onclick="() => SetState(2)" disabled="@(state == 2)">State 2</button>
+    <button @onclick="() => SetState(3)" disabled="@(state == 3)">State 3</button>
+    <AnimatedContent TState="int"
+                     TargetState="state"
+                     TransitionsProvider="TransitionsProvider"
+                     ReassignTransitionsOnEachUpdate>
+        @if (context == 1)
+        {
+            <div style="padding: 1rem; background: #e0f7fa; border-radius: 4px;">This is State 1</div>
+        }
+        else if (context == 2)
+        {
+            <div style="padding: 1rem; background: #ffe0e0; border-radius: 4px;">This is State 2</div>
+        }
+        else if (context == 3)
+        {
+            <div style="padding: 1rem; background: #e0ffe0; border-radius: 4px;">This is State 3</div>
+        }
+    </AnimatedContent>
+</div>
+
+@code {
+    private int state = 1;
+    private void SetState(int s) => state = s;
+
+    private AnimatedContent<int>.CurrentTransitions? TransitionsProvider(AnimatedContent<int>.StatesChange change)
+    {
+        // If moving to a higher state, slide in from right, out to left; if to a lower, slide in from left, out to right
+        var isCommingFromLargerState = change.Earlier.HasValue && change.Current < change.Earlier.Value;
+        var isGoingToLargerState = change.Later.HasValue && change.Current > change.Later.Value;
+
+        return new AnimatedContent<int>.CurrentTransitions
+        {
+            Enter = EnterTransition.SlideInHorizontally(Spec.Ease(durationMs: 800), initialX: isCommingFromLargerState ? "-60px" : "60px" )
+                + EnterTransition.FadeIn(Spec.Ease(durationMs: 800)),
+            Exit = ExitTransition.SlideOutHorizontally(Spec.Ease(durationMs: 800), finishX: isGoingToLargerState ? "60px" : "-60px")
+                + ExitTransition.FadeOut(Spec.Ease(durationMs: 800))
+        };
+    }
+}

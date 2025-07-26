@@ -1,0 +1,30 @@
+@using BlazorCssTransitions
+
+@* Example: Nested AnimatedSizeContainers *@
+<div style="margin-bottom: 2rem;">
+    <h4>Simple nested AnimatedSizeContainers</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Animate size changes with nested containers.
+    </div>
+    <button @onclick="ToggleOuter">@(outerExpanded ? "Collapse Outer" : "Expand Outer")</button>
+    <button @onclick="ToggleInner">@(innerExpanded ? "Collapse Inner" : "Expand Inner")</button>
+    <AnimatedSizeContainer CollapseVertically="!outerExpanded">
+        <ChildContent>
+            <div style="padding: 1rem; background: #e0e0e0; border-radius: 4px;">
+                Outer container
+                <AnimatedSizeContainer CollapseVertically="!innerExpanded">
+                    <ChildContent>
+                        <div style="padding: 1rem; background: #fffbe0; border-radius: 4px;">Inner container</div>
+                    </ChildContent>
+                </AnimatedSizeContainer>
+            </div>
+        </ChildContent>
+    </AnimatedSizeContainer>
+</div>
+
+@code {
+    private bool outerExpanded = true;
+    private bool innerExpanded = true;
+    private void ToggleOuter() => outerExpanded = !outerExpanded;
+    private void ToggleInner() => innerExpanded = !innerExpanded;
+}

@@ -1,0 +1,20 @@
+@using BlazorCssTransitions
+
+@* Example: Style/Class usage for AnimatedVisibility *@
+<div style="margin-bottom: 2rem;">
+    <h4>Style/Class Usage</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Demonstrates custom styling and class assignment.
+    </div>
+    <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
+    <AnimatedVisibility Visible="isVisible" Style="background: #f0f0f0; border: 2px dashed #888;" Class="custom-animated-visibility">
+        <ChildContent>
+            <div style="padding: 1rem;">This content uses custom style and class.</div>
+        </ChildContent>
+    </AnimatedVisibility>
+</div>
+
+@code {
+    private bool isVisible = true;
+    private void Toggle() => isVisible = !isVisible;
+}

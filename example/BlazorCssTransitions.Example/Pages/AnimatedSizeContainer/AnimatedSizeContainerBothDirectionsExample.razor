@@ -1,0 +1,20 @@
+@using BlazorCssTransitions
+
+@* Example: Both directions expand/collapse for AnimatedSizeContainer *@
+<div style="margin-bottom: 2rem;">
+    <h4>Expand/Collapse Both Directions</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Animate showing/hiding content in both width and height.
+    </div>
+    <button @onclick="Toggle">@(expanded ? "Collapse" : "Expand")</button>
+    <AnimatedSizeContainer CollapseVertically="!expanded" CollapseHorizontally="!expanded">
+        <ChildContent>
+            <div style="padding: 1rem; background: #e0ffe0; border-radius: 4px;">This content expands and collapses in both directions.</div>
+        </ChildContent>
+    </AnimatedSizeContainer>
+</div>
+
+@code {
+    private bool expanded = true;
+    private void Toggle() => expanded = !expanded;
+}

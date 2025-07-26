@@ -1,0 +1,21 @@
+﻿@using BlazorCssTransitions
+
+@* Example: Basic expand/collapse for AnimatedSizeContainer *@
+<div style="margin-bottom: 2rem;">
+    <h4>Basic example with removing content</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Animate inner content.
+    </div>
+    <button @onclick="Toggle">@(visible ? "Remove" : "Add")</button>
+    <AnimatedSizeContainer FillWidth>
+        @if (visible)
+        {
+            <div style="padding: 1rem; background: #e0f7fa; border-radius: 4px;">This content expands and collapses smoothly.</div>
+        }
+    </AnimatedSizeContainer>
+</div>
+
+@code {
+    private bool visible = true;
+    private void Toggle() => visible = !visible;
+}

@@ -1,0 +1,26 @@
+@using BlazorCssTransitions
+
+@* Example: Horizontal expand/collapse for AnimatedSizeContainer *@
+<div style="margin-bottom: 2rem;">
+    <h4>Horizontal Expand/Collapse</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Animate showing/hiding content horizontally.
+    </div>
+    <button @onclick="Toggle">@(expanded ? "Collapse" : "Expand")</button>
+
+
+    <div style="display: flex; flex-direction: row;">
+        <AnimatedSizeContainer CollapseHorizontally="!expanded">
+            <ChildContent>
+                <div style="padding: 1rem; background: #fff3e0; border-radius: 4px;">This content expands and collapses horizontally.</div>
+            </ChildContent>
+        </AnimatedSizeContainer>
+
+        <div style="width: 200px; height: 200px; background-color: green;"></div>
+    </div>
+</div>
+
+@code {
+    private bool expanded = true;
+    private void Toggle() => expanded = !expanded;
+}

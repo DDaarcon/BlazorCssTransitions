@@ -1,0 +1,28 @@
+@using BlazorCssTransitions
+
+@* Example: AnimatedVisibility as a wrapper for dynamic content *@
+<div style="margin-bottom: 2rem;">
+    <h4>Dynamic Content Wrapper</h4>
+    <div style="margin-bottom: 0.5rem; color: #555; font-size: 0.98em;">
+        Shows how AnimatedVisibility works with changing child content.
+    </div>
+    <button @onclick="Toggle">@(isVisible ? "Hide" : "Show")</button>
+    <button @onclick="ToggleContent">Switch Content</button>
+    <AnimatedVisibility Visible="isVisible">
+        @if (showFirst)
+        {
+            <div style="padding: 1rem; background: #e0f7fa; border-radius: 4px;">First content block.</div>
+        }
+        else
+        {
+            <div style="padding: 1rem; background: #ffe0e0; border-radius: 4px;">Second content block.</div>
+        }
+    </AnimatedVisibility>
+</div>
+
+@code {
+    private bool isVisible = true;
+    private bool showFirst = true;
+    private void Toggle() => isVisible = !isVisible;
+    private void ToggleContent() => showFirst = !showFirst;
+}
