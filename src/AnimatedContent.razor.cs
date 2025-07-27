@@ -123,7 +123,9 @@ public partial class AnimatedContent<TState>
 
     public class CurrentTransitions
     {
+        /// <summary>Enter transition for <see cref="StatesChange.Current"/></summary>
         public EnterTransition? Enter { get; init; }
+        /// <summary>Exit transition for <see cref="StatesChange.Current"/></summary>
         public ExitTransition? Exit { get; init; }
     }
 
