@@ -6,6 +6,8 @@
  * @returns {ResizeObserver}
  */
 export function listenForSizeChanges(element, dotNetRef) {
+  if (!element)
+    return new ResizeObserver(() => {});
 
   const observer = new ResizeObserver(() => {
 
@@ -23,7 +25,7 @@ export function listenForSizeChanges(element, dotNetRef) {
       dotNetRef.invokeMethodAsync('Invoke', offsetRect);
     }
     catch (error) {
-      debugger
+      console.error('Error invoking .NET method.', error);
     }
   });
 
@@ -37,5 +39,6 @@ export function listenForSizeChanges(element, dotNetRef) {
  * @param {ResizeObserver} observer
  */
 export function stopListeningFoSizeChanges(observer) {
-  observer.disconnect();
+  if (observer)
+    observer.disconnect();
 }

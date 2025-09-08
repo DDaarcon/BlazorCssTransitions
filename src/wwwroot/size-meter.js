@@ -4,6 +4,8 @@
  * @returns {DOMRect}
  */
 export function measureElement(element) {
+    if (!element)
+        return {};
     return element.getBoundingClientRect();
 }
 
@@ -22,6 +24,9 @@ export function measureElement(element) {
  * @returns {DOMScrollSize}
  */
 export async function measureElementScroll(element) {
+    if (!element)
+        return {};
+
     return {
         width: element.scrollWidth,
         height: element.scrollHeight,
