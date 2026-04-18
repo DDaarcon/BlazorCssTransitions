@@ -69,12 +69,12 @@ public partial class AnimatedContent<TState>
     public bool KeepContentInBounds { get; set; }
 
     /// <summary>
-    /// Shared enter transition. Is be used when <see cref="TransitionsProvider"/> and <see cref="Switch"/> return <c>null</c> for enter transition.
+    /// Shared enter transition. Is used when <see cref="TransitionsProvider"/> and <see cref="Switch"/> return <c>null</c> for the enter transition.
     /// </summary>
     [Parameter]
     public EnterTransition? SharedEnter { get; set; }
     /// <summary>
-    /// Shared exit transition. Is be used when <see cref="TransitionsProvider"/> and <see cref="Switch"/> return <c>null</c> for exit transition.
+    /// Shared exit transition. Is used when <see cref="TransitionsProvider"/> and <see cref="Switch"/> return <c>null</c> for the exit transition.
     /// </summary>
     [Parameter]
     public ExitTransition? SharedExit { get; set; }
@@ -146,7 +146,7 @@ public partial class AnimatedContent<TState>
     }
 
     // TODO 
-    // it might be a good to add a lock or a cancelation of a previous creation request, when component's Parameters change once again
+    // it might be good to add a lock or a cancelation of a previous creation request, when component's Parameters change once again
     private bool _hasInitialTargetStateBeenShown = false;
     private readonly StateElementsCollection<TState> _elementsCollection = new();
 

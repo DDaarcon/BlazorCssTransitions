@@ -237,11 +237,9 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
         // but timer finishes and sets state to final
         _transitionTimer?.Abort();
 
-        var newState = Visible
+        _currentState = Visible
             ? State.Showing
             : State.Hiding;
-
-        _currentState = newState;
 
         await NotifyAboutStateChange();
         OnSetIntermediateState();
@@ -256,38 +254,43 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
         {
             State.Showing => _enter.GetSpecifications().GetLongestTotalDuration(),
             State.Hiding => _exit.GetSpecifications().GetLongestTotalDuration(),
-            _ => throw new Exception($"State {_currentState} is not intermediate")
+            _ => throw new InvalidOperationException($"State {_currentState} is not intermediate")
         };
 
-        _transitionTimer = _timerService.StartNew(longestDuration, () =>
-        {
-            InvokeAsync(async () =>
-            {
-                _currentState = _currentState switch
-                {
-                    State.Showing => State.Shown,
-                    State.Hiding => State.Hidden,
-                    _ => _currentState
-                };
-
-                if (_currentState is State.Hidden
-                    && RemoveFromDOMWhenHidden)
-                {
-                    ShouldNotRenderAnything = true;
-                }
-                else if (_currentState is State.Hidden
-                    && DisappearWhenHidden)
-                {
-                    ShouldRenderDisappeared = true;
-                }
-
-                await NotifyAboutStateChange();
-                StateHasChanged();
-            });
-        },
-        caller: this,
-        oldRegistration: _transitionTimer /* should have been aborted just before, but it doesn't harm to do it again */);
+        _transitionTimer = _timerService.StartNew(
+            waitTime: longestDuration,
+            actionToExecute: OnTransitionCompleted,
+            caller: this,
+            oldRegistration: _transitionTimer /* should have been aborted just before, but it doesn't harm to do it again */);
     }
+
+    private void OnTransitionCompleted()
+    {
+        InvokeAsync(async () =>
+        {
+            _currentState = _currentState switch
+            {
+                State.Showing => State.Shown,
+                State.Hiding => State.Hidden,
+                _ => _currentState
+            };
+
+            if (_currentState is State.Hidden
+                && RemoveFromDOMWhenHidden)
+            {
+                ShouldNotRenderAnything = true;
+            }
+            else if (_currentState is State.Hidden
+                && DisappearWhenHidden)
+            {
+                ShouldRenderDisappeared = true;
+            }
+
+            await NotifyAboutStateChange();
+            StateHasChanged();
+        });
+    }
+
 
     private async Task NotifyAboutStateChange()
     {
@@ -306,21 +309,16 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
 
     private string GetContainerStyle()
     {
-        IEnumerable<string> styles = [
-            _currentState switch
-            {
-                State.Hidden => _enter.GetInitialStyle(),
-                State.Showing => _enter.GetFinishStyle(),
-                State.Shown => _exit.GetInitialStyle(),
-                State.Hiding => _exit.GetFinishStyle(),
-                _ => throw new Exception($"State {_currentState} is not valid")
-            }
-        ];
+        var stateStyles = _currentState switch
+        {
+            State.Hidden => _enter.GetInitialStyle(),
+            State.Showing => _enter.GetFinishStyle(),
+            State.Shown => _exit.GetInitialStyle(),
+            State.Hiding => _exit.GetFinishStyle(),
+            _ => throw new InvalidOperationException($"State {_currentState} is not valid")
+        };
 
-        if (!String.IsNullOrEmpty(Style))
-            styles = styles.Append(Style);
-
-        return String.Join(" ", styles);
+        return $"{stateStyles} {Style}";
     }
 
 
@@ -329,32 +327,23 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
 
     private string GetContainerClasses()
     {
-        // TODO benchmark
-        IEnumerable<string> classes = [
-            _containerClass,
-            _currentState switch
-            {
-                State.Hidden => _enter.GetInitialClasses(),
-                State.Showing => _enter.GetFinishClasses(),
-                State.Shown => _exit.GetInitialClasses(),
-                State.Hiding => _exit.GetFinishClasses(),
-                _ => ""
-            }
-        ];
+        var stateClasses = _currentState switch
+        {
+            State.Hidden => _enter.GetInitialClasses(),
+            State.Showing => _enter.GetFinishClasses(),
+            State.Shown => _exit.GetInitialClasses(),
+            State.Hiding => _exit.GetFinishClasses(),
+            _ => throw new InvalidOperationException($"State {_currentState} is not valid")
+        };
 
-        if (!String.IsNullOrEmpty(Class))
-            classes = classes.Append(Class);
-
-        if (ShouldRenderDisappeared)
-            classes = classes.Append(_disappearedContainerClass);
-
-        return String.Join(" ", classes);
+        return $"{_containerClass} {stateClasses} {Class} {(ShouldRenderDisappeared ? _disappearedContainerClass : "")}";
     }
 
     public void Dispose()
     {
         _transitionTimer?.Abort();
     }
+
 
 #if UNITTESTS
     private static int _instanceCounter = 0;
