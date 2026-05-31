@@ -2,6 +2,7 @@
 using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Shared.CssStylesValidation;
 using BlazorCssTransitions.Specifications;
+using DotNext.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorCssTransitions;
@@ -108,9 +109,9 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
     private bool _isApperingRequested;
 
     private bool ShouldNotRenderAnything { get; set; }
-    private bool ShouldRenderDisappeared { get; set; }
+    private bool ShouldSetCssDisplayToNone { get; set; }
 
-    private ElementReference _containerElement { get; set; }
+    private ElementReference ContainerElement { get; set; }
 
     protected override void OnInitialized()
     {
@@ -137,7 +138,7 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
 
         ShouldNotRenderAnything = !_isCurrentRenderAddingContainerToDOM;
 
-        ShouldRenderDisappeared =
+        ShouldSetCssDisplayToNone =
             // ignore everything else if RemoveFromDOMWhenHidden is enabled (that option takes precedence)
             !RemoveFromDOMWhenHidden
             // render disabled only if that functionality is enabled
@@ -149,7 +150,6 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
 
     }
 
-    // TODO verify if is required
     Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? arg)
     {
         // do not handle any events
@@ -161,10 +161,15 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
         if (!_isAfterInitialParametersSet)
         {
             _isAfterInitialParametersSet = true;
-            await NotifyAboutStateChange();
+            await NotifyAboutStateChange(_currentState);
             return;
         }
 
+        await ExecuteStateCalculationWithLock(CalculateStateOnParametersChange);
+    }
+
+    private async Task CalculateStateOnParametersChange()
+    {
         if (Enter is null
             || _enter != Enter)
         {
@@ -186,12 +191,12 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             return;
         }
 
-        if (ShouldRenderDisappeared
+        if (ShouldSetCssDisplayToNone
             && Visible)
         {
             // when disappeared element should become visible
             // we expect _currentState to be Hidden
-            ShouldRenderDisappeared = false;
+            ShouldSetCssDisplayToNone = false;
             _isApperingRequested = true;
             return;
         }
@@ -199,18 +204,30 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
         await SetIntermediateState();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            return ExecuteStateCalculationWithLock(CalculateStateAfterFirstRender);
+        return ExecuteStateCalculationWithLock(CalculateStateAfterSubsequentRender);
+    }
+    private Task CalculateStateAfterFirstRender()
+        => CalculateStateAfterRender(firstRender: true);
+    private Task CalculateStateAfterSubsequentRender()
+        => CalculateStateAfterRender(firstRender: false);
+    private async Task CalculateStateAfterRender(bool firstRender)
     {
         if (CheckIfShouldRerender(firstRender))
         {
             _isCurrentRenderAddingContainerToDOM = false;
             _isApperingRequested = false;
-            await _cssStylesAppliedValidator.EnsureStylesWereApplied(_containerElement);
+            await _cssStylesAppliedValidator.EnsureStylesWereApplied(ContainerElement);
 
             await SetIntermediateState();
             StateHasChanged();
         }
     }
+
 
     private bool CheckIfShouldRerender(bool firstRender)
     {
@@ -225,6 +242,40 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             || DisappearWhenHidden;
     }
 
+
+
+    private readonly ValueTaskCompletionSource<StateCalculationHoldContinuation> _ongoingStateCalculationTaskSource = new();
+    private ValueTask<StateCalculationHoldContinuation>? _ongoingStateCalculationTask;
+    private readonly Lock _ongoingStateCalculationCompletionLock = new();
+    private readonly SemaphoreSlim _stateCalculationSemaphore = new(1, 1);
+    private enum StateCalculationHoldContinuation
+    {
+        Continue,
+        Abort
+    }
+
+    private async Task ExecuteStateCalculationWithLock(Func<Task> calculation)
+    {
+        try
+        {
+            await _stateCalculationSemaphore.WaitAsync();
+
+            _ongoingStateCalculationTaskSource.Reset();
+            _ongoingStateCalculationTask = _ongoingStateCalculationTaskSource.CreateTask(Timeout.InfiniteTimeSpan, CancellationToken.None);
+
+            await calculation();
+        }
+        finally
+        {
+            if (!_ongoingStateCalculationTaskSource.IsCompleted)
+                _ongoingStateCalculationTaskSource.TrySetResult(StateCalculationHoldContinuation.Continue);
+
+            await AwaitCalculationFinish();
+            _stateCalculationSemaphore.Release();
+        }
+    }
+
+
     private async Task SetIntermediateState()
     {
         if ((Visible && _currentState is State.Showing or State.Shown)
@@ -232,6 +283,8 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
         {
             return;
         }
+
+        _ongoingStateCalculationTaskSource.TrySetResult(StateCalculationHoldContinuation.Abort);
 
         // abort right away, to prevent race conditions when OnSetIntermediateState expects intermediate state
         // but timer finishes and sets state to final
@@ -241,7 +294,7 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             ? State.Showing
             : State.Hiding;
 
-        await NotifyAboutStateChange();
+        await NotifyAboutStateChange(_currentState);
         OnSetIntermediateState();
     }
 
@@ -268,33 +321,66 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
     {
         InvokeAsync(async () =>
         {
-            _currentState = _currentState switch
+            var continuation = await AwaitCalculationFinish();
+            if (continuation is StateCalculationHoldContinuation.Abort)
+                return;
+
+
+            var newState = _currentState switch
             {
                 State.Showing => State.Shown,
                 State.Hiding => State.Hidden,
                 _ => _currentState
             };
+            _currentState = newState;
 
-            if (_currentState is State.Hidden
-                && RemoveFromDOMWhenHidden)
+            if (newState is State.Hidden)
             {
-                ShouldNotRenderAnything = true;
-            }
-            else if (_currentState is State.Hidden
-                && DisappearWhenHidden)
-            {
-                ShouldRenderDisappeared = true;
+                UpdateUiPropertiesAfterReachingHiddenState();
             }
 
-            await NotifyAboutStateChange();
+            await NotifyAboutStateChange(newState);
             StateHasChanged();
         });
     }
 
-
-    private async Task NotifyAboutStateChange()
+    private async Task<StateCalculationHoldContinuation> AwaitCalculationFinish()
     {
-        switch (_currentState)
+        try
+        {
+            _ongoingStateCalculationCompletionLock.Enter();
+
+            if (!_ongoingStateCalculationTask.HasValue)
+                return StateCalculationHoldContinuation.Continue;
+
+            var holdContinuation = await _ongoingStateCalculationTask.Value;
+            _ongoingStateCalculationTask = null;
+
+            return holdContinuation;
+        }
+        finally
+        {
+            _ongoingStateCalculationCompletionLock.Exit();
+        }
+    }
+
+
+    private void UpdateUiPropertiesAfterReachingHiddenState()
+    {
+        if (RemoveFromDOMWhenHidden)
+        {
+            ShouldNotRenderAnything = true;
+        }
+        else if (DisappearWhenHidden)
+        {
+            ShouldSetCssDisplayToNone = true;
+        }
+    }
+
+
+    private async Task NotifyAboutStateChange(State state)
+    {
+        switch (state)
         {
             case State.Hidden:
                 await OnHidden.InvokeAsync();
@@ -304,7 +390,7 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
                 break;
         }
 
-        await OnStateChanged.InvokeAsync(_currentState);
+        await OnStateChanged.InvokeAsync(state);
     }
 
     private string GetContainerStyle()
@@ -336,7 +422,7 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             _ => throw new InvalidOperationException($"State {_currentState} is not valid")
         };
 
-        return $"{_containerClass} {stateClasses} {Class} {(ShouldRenderDisappeared ? _disappearedContainerClass : "")}";
+        return $"{_containerClass} {stateClasses} {Class} {(ShouldSetCssDisplayToNone ? _disappearedContainerClass : "")}";
     }
 
     public void Dispose()
