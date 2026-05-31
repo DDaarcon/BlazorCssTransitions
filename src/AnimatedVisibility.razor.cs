@@ -165,11 +165,7 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             return;
         }
 
-        await ExecuteStateCalculationWithLock(CalculateStateOnParametersChange);
-    }
 
-    private async Task CalculateStateOnParametersChange()
-    {
         if (Enter is null
             || _enter != Enter)
         {
@@ -205,17 +201,7 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
     }
 
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            return ExecuteStateCalculationWithLock(CalculateStateAfterFirstRender);
-        return ExecuteStateCalculationWithLock(CalculateStateAfterSubsequentRender);
-    }
-    private Task CalculateStateAfterFirstRender()
-        => CalculateStateAfterRender(firstRender: true);
-    private Task CalculateStateAfterSubsequentRender()
-        => CalculateStateAfterRender(firstRender: false);
-    private async Task CalculateStateAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (CheckIfShouldRerender(firstRender))
         {
@@ -244,38 +230,6 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
 
 
 
-    private readonly ValueTaskCompletionSource<StateCalculationHoldContinuation> _ongoingStateCalculationTaskSource = new();
-    private ValueTask<StateCalculationHoldContinuation>? _ongoingStateCalculationTask;
-    private readonly Lock _ongoingStateCalculationCompletionLock = new();
-    private readonly SemaphoreSlim _stateCalculationSemaphore = new(1, 1);
-    private enum StateCalculationHoldContinuation
-    {
-        Continue,
-        Abort
-    }
-
-    private async Task ExecuteStateCalculationWithLock(Func<Task> calculation)
-    {
-        try
-        {
-            await _stateCalculationSemaphore.WaitAsync();
-
-            _ongoingStateCalculationTaskSource.Reset();
-            _ongoingStateCalculationTask = _ongoingStateCalculationTaskSource.CreateTask(Timeout.InfiniteTimeSpan, CancellationToken.None);
-
-            await calculation();
-        }
-        finally
-        {
-            if (!_ongoingStateCalculationTaskSource.IsCompleted)
-                _ongoingStateCalculationTaskSource.TrySetResult(StateCalculationHoldContinuation.Continue);
-
-            await AwaitCalculationFinish();
-            _stateCalculationSemaphore.Release();
-        }
-    }
-
-
     private async Task SetIntermediateState()
     {
         if ((Visible && _currentState is State.Showing or State.Shown)
@@ -283,8 +237,6 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
         {
             return;
         }
-
-        _ongoingStateCalculationTaskSource.TrySetResult(StateCalculationHoldContinuation.Abort);
 
         // abort right away, to prevent race conditions when OnSetIntermediateState expects intermediate state
         // but timer finishes and sets state to final
@@ -321,11 +273,6 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
     {
         InvokeAsync(async () =>
         {
-            var continuation = await AwaitCalculationFinish();
-            if (continuation is StateCalculationHoldContinuation.Abort)
-                return;
-
-
             var newState = _currentState switch
             {
                 State.Showing => State.Shown,
@@ -343,27 +290,6 @@ public partial class AnimatedVisibility : IDisposable, IHandleEvent
             StateHasChanged();
         });
     }
-
-    private async Task<StateCalculationHoldContinuation> AwaitCalculationFinish()
-    {
-        try
-        {
-            _ongoingStateCalculationCompletionLock.Enter();
-
-            if (!_ongoingStateCalculationTask.HasValue)
-                return StateCalculationHoldContinuation.Continue;
-
-            var holdContinuation = await _ongoingStateCalculationTask.Value;
-            _ongoingStateCalculationTask = null;
-
-            return holdContinuation;
-        }
-        finally
-        {
-            _ongoingStateCalculationCompletionLock.Exit();
-        }
-    }
-
 
     private void UpdateUiPropertiesAfterReachingHiddenState()
     {
