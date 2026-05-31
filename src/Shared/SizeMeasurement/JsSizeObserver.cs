@@ -42,8 +42,13 @@ internal class JsSizeObserver(IJSRuntime jsRuntime) : IAsyncDisposable
         public Func<TCallbackParam, Task> OnTrigger { get; init; } = default!;
         public Func<Task> OnDispose { get; set; } = default!;
 
+        private bool _isDisposed;
         public async ValueTask DisposeAsync()
         {
+            if (_isDisposed)
+                return;
+            _isDisposed = true;
+
             await OnDispose();
             DotNetReference.Dispose();
         }

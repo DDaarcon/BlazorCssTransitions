@@ -5,6 +5,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Configurations>Debug;Release;UnitTests</Configurations>
+    <Title>BlazorCssTransitions</Title>
+    <PackageIcon>nuget_icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/DDaarcon/BlazorCssTransitions</RepositoryUrl>
+    <PackageTags>blazor;transitions;hybrid</PackageTags>
+    <PackageProjectUrl>https://github.com/DDaarcon/BlazorCssTransitions</PackageProjectUrl>
+    <Description>Easily define basic animations and transitions entirely in C#.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<Version>0.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +27,17 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\animatedVisibilityTransitions\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\assets\nuget_icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
