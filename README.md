@@ -1,5 +1,5 @@
 # BlazorCssTransitions
-### Work in progress
+### The code isn't entirely stable yet. Errors might occur.
 ## Introduction
 Library simplifies adding animations to blazor apps. Using C#/Blazor code create animations of visibility, content change, size change and other (TBA).
 
