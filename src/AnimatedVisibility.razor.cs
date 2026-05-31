@@ -2,7 +2,6 @@
 using BlazorCssTransitions.Shared;
 using BlazorCssTransitions.Shared.CssStylesValidation;
 using BlazorCssTransitions.Specifications;
-using DotNext.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorCssTransitions;
